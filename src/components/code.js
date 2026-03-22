@@ -6,7 +6,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { util } from './util.js';
 import { element } from './element.js';
 import { layer } from './layer.js';
@@ -602,7 +602,7 @@ export function code(options, mode) {
   }
 
   // 创建 code 容器
-  var codeElem = $('<code class="layui-code-wrap"></code>'); // 此处的闭合标签是为了兼容 IE8
+  var codeElem = $('<code class="layui-code-wrap"></code>');
 
   // 添加主容器 className
   othis.addClass(
