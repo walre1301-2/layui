@@ -6,7 +6,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { laytpl } from '../core/laytpl.js';
 import { util } from './util.js';
 
@@ -409,7 +409,7 @@ Class.prototype.render = function (type) {
 
   // 阻止全局事件
   mainElem.find('.layui-menu').on(clickOrMousedown, function (e) {
-    layui.stope(e);
+    e.stopPropagation();
   });
 
   // 触发菜单列表事件
@@ -430,7 +430,7 @@ Class.prototype.render = function (type) {
           : null;
 
       ret === false || isChild || that.remove();
-      layui.stope(e);
+      e.stopPropagation();
     }
   });
 
@@ -706,7 +706,11 @@ thisModule.spread = function (othis, isAccordion) {
       othis.parents('.' + STR_ITEM_PARENT).addClass(STR_ITEM_CHECKED2); // 添加父级菜单选中样式
 
       options.title =
-        options.title || $.trim(othis.children('.' + STR_MENU_TITLE).text());
+        options.title ||
+        othis
+          .children('.' + STR_MENU_TITLE)
+          .text()
+          .trim();
 
       // 触发事件
       layui.event.call(this, MOD_NAME, 'click(' + filter + ')', options);

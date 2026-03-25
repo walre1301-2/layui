@@ -180,9 +180,6 @@ lay.ie = (function () {
  * 获取 layui 常见方法，以便用于组件单独版
  */
 
-lay.layui = layui || {};
-lay.getPath = layui.cache.dir; // 获取当前 JS 所在目录
-lay.stope = layui.stope; // 中止冒泡
 lay.each = function () {
   // 遍历
   layui.each.apply(layui, arguments);
@@ -285,8 +282,8 @@ lay.autoIncrementer = function (key, opts = {}) {
 lay.getStyleRules = function (style, callback) {
   if (!style) return;
 
-  var sheet = style.sheet || style.styleSheet || {};
-  var rules = sheet.cssRules || sheet.rules;
+  var sheet = style.sheet || {};
+  var rules = sheet.cssRules || [];
 
   if (typeof callback === 'function') {
     layui.each(rules, function (i, item) {
@@ -327,12 +324,7 @@ lay.style = function (options) {
   if (!styleText) return;
 
   // 添加样式
-  if ('styleSheet' in style) {
-    style.setAttribute('type', 'text/css');
-    style.styleSheet.cssText = styleText;
-  } else {
-    style.innerHTML = styleText;
-  }
+  style.innerHTML = styleText;
 
   // ID
   style.id =
@@ -743,63 +735,14 @@ lay.touchSwipe = function (elem, opts) {
 };
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | AddEventListenerOptions) => any}*/
-lay.addEvent = (function () {
-  if (document.addEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.addEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var listener = function (e) {
-        e.target = e.srcElement;
-        fn.call(elem, e);
-      };
-      listener._rawFn = fn;
-      if (!elem[eventsCacheName]) {
-        elem[eventsCacheName] = [];
-      }
-      var include = false;
-      lay.each(elem[eventsCacheName], function (_, listener) {
-        if (listener._rawFn === fn) {
-          include = true;
-          return true;
-        }
-      });
-      if (!include) {
-        elem[eventsCacheName].push(listener);
-        elem.attachEvent('on' + eventName, listener);
-      }
-    };
-  }
-})();
+lay.addEvent = function (elem, eventName, fn, options) {
+  elem.addEventListener(eventName, fn, options);
+};
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | EventListenerOptions) => any}*/
-lay.removeEvent = (function () {
-  if (document.removeEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.removeEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var events = elem[eventsCacheName];
-      if (layui.isArray(events)) {
-        var newEvents = [];
-        lay.each(events, function (_, listener) {
-          if (listener._rawFn === fn) {
-            elem.detachEvent('on' + eventName, listener);
-          } else {
-            newEvents.push(listener);
-          }
-        });
-        elem[eventsCacheName] = newEvents;
-      }
-    };
-  }
-})();
+lay.removeEvent = function (elem, eventName, fn, options) {
+  elem.removeEventListener(eventName, fn, options);
+};
 
 /**
  * 绑定指定元素外部的点击事件
@@ -824,7 +767,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   var listener = function (event) {
     var el = target;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     var eventPath = getEventPath(event);
 
     if (!el || el === eventTarget || eventPath.indexOf(el) !== -1) {
@@ -838,7 +781,7 @@ lay.onClickOutside = function (target, handler, options) {
   };
 
   function shouldIgnore(event, eventPath) {
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     for (var i = 0; i < ignore.length; i++) {
       var target = ignore[i];
       if (typeof target === 'string') {
@@ -862,7 +805,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   function getEventPath(event) {
     var path = (event.composedPath && event.composedPath()) || event.path;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
 
     if (path !== null && path !== undefined) {
       return path;
@@ -881,14 +824,10 @@ lay.onClickOutside = function (target, handler, options) {
   }
 
   function bindEventListener(elem, eventName, handler, opts) {
-    elem.addEventListener
-      ? elem.addEventListener(eventName, handler, opts)
-      : elem.attachEvent('on' + eventName, handler);
+    elem.addEventListener(eventName, handler, opts);
 
     return function () {
-      elem.removeEventListener
-        ? elem.removeEventListener(eventName, handler, opts)
-        : elem.detachEvent('on' + eventName, handler);
+      elem.removeEventListener(eventName, handler, opts);
     };
   }
 

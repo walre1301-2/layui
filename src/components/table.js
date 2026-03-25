@@ -5,7 +5,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { laytpl } from '../core/laytpl.js';
 import { laypage } from './laypage.js';
 import { util } from './util.js';
@@ -676,14 +676,7 @@ Class.prototype.renderStyle = function () {
           cellMaxHeight +
           '; white-space: normal; text-overflow: clip;}',
         '> td:hover > .layui-table-cell{overflow: auto;}',
-      ].concat(
-        device.ie
-          ? [
-              '.layui-table-edit{height: ' + cellMaxHeight + ';}',
-              'td[data-edit]:hover:after{height: ' + cellMaxHeight + ';}',
-            ]
-          : [],
-      ),
+      ],
       function (i, val) {
         val && text.push(trClassName + ' ' + val);
       },
@@ -811,27 +804,21 @@ Class.prototype.renderToolbar = function () {
           return layer.tips(i18n.$t('table.tools.export.noDataPrompt'), elem, {
             tips: 3,
           });
-        if (device.ie) {
-          layer.tips(i18n.$t('table.tools.export.compatPrompt'), elem, {
-            tips: 3,
-          });
-        } else {
-          openPanel({
-            list: (function () {
-              return [
-                '<li data-type="csv">' +
-                  i18n.$t('table.tools.export.csvText') +
-                  '</li>',
-              ].join('');
-            })(),
-            done: function (panel, list) {
-              list.on('click', function () {
-                var type = $(this).data('type');
-                table.exportFile.call(that, options.id, null, type);
-              });
-            },
-          });
-        }
+        openPanel({
+          list: (function () {
+            return [
+              '<li data-type="csv">' +
+                i18n.$t('table.tools.export.csvText') +
+                '</li>',
+            ].join('');
+          })(),
+          done: function (panel, list) {
+            list.on('click', function () {
+              var type = $(this).data('type');
+              table.exportFile.call(that, options.id, null, type);
+            });
+          },
+        });
       },
     },
     print: {
@@ -2523,13 +2510,13 @@ Class.prototype.events = function () {
       that.renderForm();
 
       panel.on('click', function (e) {
-        layui.stope(e);
+        e.stopPropagation();
       });
 
       sets.done && sets.done(panel, list);
     };
 
-    layui.stope(e);
+    e.stopPropagation();
     _DOC.trigger('table.tool.panel.remove');
     layer.close(that.tipsIndex);
 
@@ -2741,7 +2728,7 @@ Class.prototype.events = function () {
       var othis = $(this);
       var index = othis.index();
       var field = othis.parents('th').eq(0).data('field');
-      layui.stope(e);
+      e.stopPropagation();
       if (index === 0) {
         that.sort({
           field: field,
@@ -2835,7 +2822,7 @@ Class.prototype.events = function () {
       });
     }
 
-    layui.stope(e);
+    e.stopPropagation();
 
     // 事件
     layui.event.call(
@@ -2861,7 +2848,7 @@ Class.prototype.events = function () {
     var checked = radio[0].checked;
     var index = radio.parents('tr').eq(0).data('index');
 
-    layui.stope(e);
+    e.stopPropagation();
     if (radio[0].disabled) return false;
 
     // 标注选中样式
@@ -2991,7 +2978,7 @@ Class.prototype.events = function () {
       })(othis.data('content') || data[field]);
       othis.find('.' + ELEM_EDIT)[0] || othis.append(input);
       input.focus();
-      e && layui.stope(e);
+      e?.stopPropagation();
     }
   };
 
@@ -3189,7 +3176,7 @@ Class.prototype.events = function () {
     }
 
     othis.remove();
-    layui.stope(e);
+    e.stopPropagation();
   };
 
   // 表格主体单元格展开事件
@@ -3228,12 +3215,12 @@ Class.prototype.events = function () {
   that.layBody
     .on('click', '*[lay-event]', function (e) {
       toolFn.call(this);
-      layui.stope(e);
+      e.stopPropagation();
     })
     .on('dblclick', '*[lay-event]', function (e) {
       //行工具条双击事件
       toolFn.call(this, 'toolDouble');
-      layui.stope(e);
+      e.stopPropagation();
     });
 
   // 同步滚动条
@@ -3324,8 +3311,6 @@ Class.prototype.getContentWidth = function (elem) {
   if (
     // document
     elem[0].nodeType === 9 ||
-    // IE 中 border-box 盒模型，getComputedStyle 得到的 width/height 是按照 content-box 计算出来的
-    (lay.ie && elem.css('box-sizing') === 'border-box') ||
     elem.css('display') === 'none'
   ) {
     return elem.width();
@@ -3734,8 +3719,6 @@ table.exportFile = function (id, data, opts) {
     xls: 'application/vnd.ms-excel',
   }[type];
   var alink = document.createElement('a');
-
-  if (device.ie) return hint.error('IE_NOT_SUPPORT_EXPORTS');
 
   // 处理 treeTable 数据
   var isTreeTable = config.tree && config.tree.view;

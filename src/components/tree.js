@@ -5,7 +5,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 import { layer } from './layer.js';
 import { form } from './form.js';
@@ -510,9 +510,11 @@ Class.prototype.checkClick = function (elem, item) {
   var elemMain = entry.children('.' + CONST.ELEM_MAIN);
 
   // 点击复选框
-  elemMain.on('click', 'input[same="layuiTreeCheck"]', layui.stope);
+  elemMain.on('click', 'input[same="layuiTreeCheck"]', function (e) {
+    e.stopPropagation();
+  });
   elemMain.on('click', 'input[same="layuiTreeCheck"]+', function (e) {
-    layui.stope(e); // 阻止点击节点事件
+    e.stopPropagation(); // 阻止点击节点事件
 
     var elemCheckbox = $(this).prev();
     var checked = elemCheckbox.prop('checked');
@@ -543,7 +545,7 @@ Class.prototype.operate = function (elem, item) {
   entry
     .children('.layui-tree-btnGroup')
     .on('click', '.layui-icon', function (e) {
-      layui.stope(e); // 阻止节点操作
+      e.stopPropagation(); // 阻止节点操作
 
       var type = $(this).data('type');
       var packCont = elem.children('.' + CONST.ELEM_PACK);

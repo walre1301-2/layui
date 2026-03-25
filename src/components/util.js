@@ -5,7 +5,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 
 var hint = layui.hint();
 
@@ -519,9 +519,6 @@ var util = {
     return events;
   },
 };
-
-// 兼容旧版
-util.event = util.on;
 
 // 输出接口
 export { util };
