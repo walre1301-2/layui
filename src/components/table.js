@@ -5,7 +5,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { laytpl } from '../core/laytpl.js';
 import { laypage } from './laypage.js';
 import { util } from './util.js';
@@ -88,11 +88,29 @@ var getThisTableConfig = function (id) {
   return config || null;
 };
 
-// lay 函数可以处理 Selector，HTMLElement，JQuery 类型
-// 无效的 CSS 选择器字符串，会抛出 SyntaxError 异常，此时直接返回 laytpl 模板字符串
+/**
+ * 该实现最早可追溯：https://github.com/layui/layui/pull/1438
+ * 由于已取消 `lay()` 查找元素功能，此处按当年「兼容模板选择器与模板字符串」的契约重构：
+ * 1. 传入 HTMLElement 或 jQuery 对象时，读取首个元素的 innerHTML
+ * 2. 传入字符串时，沿用原生 querySelector 的行为，不再支持 jQuery 特有的选择器
+ * 3. 无效的 CSS 选择器字符串，会抛出 SyntaxError 异常，此时直接返回 laytpl 模板字符串
+ */
 var resolveTplStr = function (templet) {
   try {
-    return lay(templet).html();
+    if (templet?.jquery) {
+      return templet[0] ? templet.html() : undefined;
+    }
+
+    if (templet?.nodeType === 1) {
+      return templet.innerHTML;
+    }
+
+    if (typeof templet === 'string') {
+      var elem = document.querySelector(templet);
+      return elem ? elem.innerHTML : undefined;
+    }
+
+    return undefined;
   } catch {
     return templet;
   }
@@ -176,129 +194,136 @@ var resizeObserver = lay.createSharedResizeObserver(MOD_NAME);
 // thead 区域模板
 var TPL_HEADER = function (options) {
   var rowCols =
-    '{{#var colspan = layui.type(item2.colspan2) === \'number\' ? item2.colspan2 : item2.colspan; if(colspan){}} colspan="{{=colspan}}"{{#} if(item2.rowspan){}} rowspan="{{=item2.rowspan}}"{{#}}}';
+    '{{ var colspan = layui.type(item2.colspan2) === \'number\' ? item2.colspan2 : item2.colspan; if(colspan){ }} colspan="{{=colspan}}"{{ } if(item2.rowspan){ }} rowspan="{{=item2.rowspan}}"{{ } }}';
 
   options = options || {};
-  return [
-    '<table cellspacing="0" cellpadding="0" border="0" class="layui-table" ',
-    '{{# if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{# } }} {{# if(d.data.size){ }}lay-size="{{=d.data.size}}"{{# } }} {{# if(d.data.even){ }}lay-even{{# } }}>',
-    '<thead>',
-    '{{# layui.each(d.data.cols, function(i1, item1){ }}',
-    '<tr>',
-    '{{# layui.each(item1, function(i2, item2){ }}',
-    '{{# if(item2.fixed && item2.fixed !== "right"){ left = true; } }}',
-    '{{# if(item2.fixed === "right"){ right = true; } }}',
-    (function () {
-      if (options.fixed && options.fixed !== 'right') {
-        return '{{# if(item2.fixed && item2.fixed !== "right"){ }}';
-      }
-      if (options.fixed === 'right') {
-        return '{{# if(item2.fixed === "right"){ }}';
-      }
-      return '';
-    })(),
-    '{{# var isSort = !(item2.colGroup) && item2.sort; }}',
-    '<th data-field="{{= item2.field||i2 }}" data-key="{{=d.index}}-{{=i1}}-{{=i2}}" {{# if( item2.parentKey){ }}data-parentkey="{{= item2.parentKey }}"{{# } }} {{# if(item2.minWidth){ }}data-minwidth="{{=item2.minWidth}}"{{# } }} {{# if(item2.maxWidth){ }}data-maxwidth="{{=item2.maxWidth}}"{{# } }} {{# if(item2.style){ }}style="{{=item2.style}}"{{# } }} ' +
-      rowCols +
-      ' {{# if(item2.unresize || item2.colGroup){ }}data-unresize="true"{{# } }} class="{{# if(item2.hide){ }}layui-hide{{# } }}{{# if(isSort){ }} layui-unselect{{# } }}{{# if(!item2.field){ }} layui-table-col-special{{# } }}"{{# if(item2.title){ }} title="{{ layui.$(\'<div>\' + item2.title + \'</div>\').text() }}"{{# } }}>',
-    '<div class="layui-table-cell laytable-cell-',
-    '{{# if(item2.colGroup){ }}',
-    'group',
-    '{{# } else { }}',
-    '{{=d.index}}-{{=i1}}-{{=i2}}',
-    '{{# if(item2.type !== "normal"){ }}',
-    ' laytable-cell-{{= item2.type }}',
-    '{{# } }}',
-    '{{# } }}',
-    '" {{#if(item2.align){}}align="{{=item2.align}}"{{#}}}>',
-    '{{# if(item2.type === "checkbox"){ }}', //复选框
-    '<input type="checkbox" name="layTableCheckbox" lay-skin="primary" lay-filter="layTableAllChoose" {{# if(item2[d.data.checkName]){ }}checked{{# }; }}>',
-    '{{# } else { }}',
-    '<span>{{-item2.title||""}}</span>',
-    '{{# if(isSort){ }}',
-    '<span class="layui-table-sort layui-inline"><i class="layui-edge layui-table-sort-asc" title="{{= d.i18nMessages.table_sort_asc }}"></i><i class="layui-edge layui-table-sort-desc" title="{{= d.i18nMessages.table_sort_desc }}"></i></span>',
-    '{{# } }}',
-    '{{# } }}',
-    '</div>',
-    '</th>',
-    options.fixed ? '{{# }; }}' : '',
-    '{{# }); }}',
-    '</tr>',
-    '{{# }); }}',
-    '</thead>',
-    '</table>',
-  ].join('');
+  return `
+    <table cellspacing="0" cellpadding="0" border="0" class="layui-table"
+      {{ if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{ } }}
+      {{ if(d.data.size){ }}lay-size="{{=d.data.size}}"{{ } }}
+      {{ if(d.data.even){ }}lay-even{{ } }}>
+      <thead>
+        {{ layui.each(d.data.cols, function(i1, item1){ }}
+          <tr>
+            {{ layui.each(item1, function(i2, item2){ }}
+              {{ if(item2.fixed && item2.fixed !== "right"){ left = true; } }}
+              {{ if(item2.fixed === "right"){ right = true; } }}
+              ${(function () {
+                if (options.fixed && options.fixed !== 'right') {
+                  return '{{ if(item2.fixed && item2.fixed !== "right"){ }}';
+                }
+                if (options.fixed === 'right') {
+                  return '{{ if(item2.fixed === "right"){ }}';
+                }
+                return '';
+              })()}
+              {{ var isSort = !(item2.colGroup) && item2.sort; }}
+              <th
+                data-field="{{= item2.field||i2 }}"
+                data-key="{{=d.index}}-{{=i1}}-{{=i2}}"
+                {{ if(item2.parentKey){ }}data-parentkey="{{= item2.parentKey }}"{{ } }}
+                {{ if(item2.minWidth){ }}data-minwidth="{{=item2.minWidth}}"{{ } }}
+                {{ if(item2.maxWidth){ }}data-maxwidth="{{=item2.maxWidth}}"{{ } }}
+                {{ if(item2.style){ }}style="{{=item2.style}}"{{ } }}
+                ${rowCols}
+                {{ if(item2.unresize || item2.colGroup){ }}data-unresize="true"{{ } }}
+                class="{{ if(item2.hide){ }}layui-hide{{ } }}{{ if(isSort){ }} layui-unselect{{ } }}{{ if(!item2.field){ }} layui-table-col-special{{ } }}"
+                {{ if(item2.title){ }}title="{{ layui.$('<div>' + item2.title + '</div>').text() }}"{{ } }}>
+                <div
+                  class="layui-table-cell laytable-cell-{{ if(item2.colGroup){ }}group{{ } else { }}{{=d.index}}-{{=i1}}-{{=i2}}{{ if(item2.type !== "normal"){ }} laytable-cell-{{= item2.type }}{{ } }}{{ } }}"
+                  {{ if(item2.align){ }}align="{{=item2.align}}"{{ } }}>
+                  {{ if(item2.type === "checkbox"){ }}
+                    <input type="checkbox" name="layTableCheckbox" lay-skin="primary" lay-filter="layTableAllChoose" {{ if(item2[d.data.checkName]){ }}checked{{ }; }}>
+                  {{ } else { }}
+                    <span>{{-item2.title||""}}</span>
+                    {{ if(isSort){ }}
+                      <span class="layui-table-sort layui-inline"><i class="layui-edge layui-table-sort-asc" title="{{= d.i18nMessages.table_sort_asc }}"></i><i class="layui-edge layui-table-sort-desc" title="{{= d.i18nMessages.table_sort_desc }}"></i></span>
+                    {{ } }}
+                  {{ } }}
+                </div>
+              </th>
+              ${options.fixed ? '{{ }; }}' : ''}
+            {{ }); }}
+          </tr>
+        {{ }); }}
+      </thead>
+    </table>
+  `;
 };
 
 // tbody 区域模板
-var TPL_BODY = [
-  '<table cellspacing="0" cellpadding="0" border="0" class="layui-table" ',
-  '{{# if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{# } }} {{# if(d.data.size){ }}lay-size="{{=d.data.size}}"{{# } }} {{# if(d.data.even){ }}lay-even{{# } }}>',
-  '<tbody></tbody>',
-  '</table>',
-].join('');
+var TPL_BODY = `
+  <table cellspacing="0" cellpadding="0" border="0" class="layui-table"
+    {{ if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{ } }}
+    {{ if(d.data.size){ }}lay-size="{{=d.data.size}}"{{ } }}
+    {{ if(d.data.even){ }}lay-even{{ } }}>
+    <tbody></tbody>
+  </table>
+`;
 
 // 主模板
-var TPL_MAIN = [
-  '{{# if(d.data.toolbar){ }}',
-  '<div class="layui-table-tool">',
-  '<div class="layui-table-tool-temp"></div>',
-  '<div class="layui-table-tool-self"></div>',
-  '</div>',
-  '{{# } }}',
-  '<div class="layui-table-box">',
-  '{{# if(d.data.loading){ }}',
-  '<div class="layui-table-init">',
-  '<div class="layui-table-loading-icon">',
-  '{{# if(typeof d.data.loading === "string"){ }}',
-  '{{- d.data.loading}}',
-  '{{# } else{ }}',
-  '<i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i>',
-  '{{# } }}',
-  '</div>',
-  '</div>',
-  '{{# } }}',
-  '{{# var left, right; }}',
-  '<div class="layui-table-header">',
-  TPL_HEADER(),
-  '</div>',
-  '<div class="layui-table-body layui-table-main">',
-  TPL_BODY,
-  '</div>',
-  '{{# if(left){ }}',
-  '<div class="layui-table-fixed layui-table-fixed-l">',
-  '<div class="layui-table-header">',
-  TPL_HEADER({ fixed: true }),
-  '</div>',
-  '<div class="layui-table-body">',
-  TPL_BODY,
-  '</div>',
-  '</div>',
-  '{{# }; }}',
-  '{{# if(right){ }}',
-  '<div class="layui-table-fixed layui-table-fixed-r layui-hide">',
-  '<div class="layui-table-header">',
-  TPL_HEADER({ fixed: 'right' }),
-  '<div class="layui-table-mend"></div>',
-  '</div>',
-  '<div class="layui-table-body">',
-  TPL_BODY,
-  '</div>',
-  '</div>',
-  '{{# }; }}',
-  '</div>',
-  '{{# if(d.data.totalRow){ }}',
-  '<div class="layui-table-total">',
-  '<table cellspacing="0" cellpadding="0" border="0" class="layui-table" ',
-  '{{# if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{# } }} {{# if(d.data.size){ }}lay-size="{{=d.data.size}}"{{# } }} {{# if(d.data.even){ }}lay-even{{# } }}>',
-  '<tbody><tr><td><div class="layui-table-cell" style="visibility: hidden;">Total</div></td></tr></tbody>',
-  '</table>',
-  '</div>',
-  '{{# } }}',
-  '<div class="layui-table-column layui-table-page layui-hide">',
-  '<div class="layui-inline layui-table-pageview" id="layui-table-page{{=d.index}}"></div>',
-  '</div>',
-].join('');
+var TPL_MAIN = `
+  {{ if(d.data.toolbar){ }}
+    <div class="layui-table-tool">
+      <div class="layui-table-tool-temp"></div>
+      <div class="layui-table-tool-self"></div>
+    </div>
+  {{ } }}
+  <div class="layui-table-box">
+    {{ if(d.data.loading){ }}
+      <div class="layui-table-init">
+        <div class="layui-table-loading-icon">
+          {{ if(typeof d.data.loading === "string"){ }}
+            {{- d.data.loading}}
+          {{ } else{ }}
+            <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i>
+          {{ } }}
+        </div>
+      </div>
+    {{ } }}
+    {{ var left, right; }}
+    <div class="layui-table-header">
+      ${TPL_HEADER()}
+    </div>
+    <div class="layui-table-body layui-table-main">
+      ${TPL_BODY}
+    </div>
+    {{ if(left){ }}
+      <div class="layui-table-fixed layui-table-fixed-l">
+        <div class="layui-table-header">
+          ${TPL_HEADER({ fixed: true })}
+        </div>
+        <div class="layui-table-body">
+          ${TPL_BODY}
+        </div>
+      </div>
+    {{ }; }}
+    {{ if(right){ }}
+      <div class="layui-table-fixed layui-table-fixed-r layui-hide">
+        <div class="layui-table-header">
+          ${TPL_HEADER({ fixed: 'right' })}
+          <div class="layui-table-mend"></div>
+        </div>
+        <div class="layui-table-body">
+          ${TPL_BODY}
+        </div>
+      </div>
+    {{ }; }}
+  </div>
+  {{ if(d.data.totalRow){ }}
+    <div class="layui-table-total">
+      <table cellspacing="0" cellpadding="0" border="0" class="layui-table"
+        {{ if(d.data.skin){ }}lay-skin="{{=d.data.skin}}"{{ } }}
+        {{ if(d.data.size){ }}lay-size="{{=d.data.size}}"{{ } }}
+        {{ if(d.data.even){ }}lay-even{{ } }}>
+        <tbody><tr><td><div class="layui-table-cell" style="visibility: hidden;">Total</div></td></tr></tbody>
+      </table>
+    </div>
+  {{ } }}
+  <div class="layui-table-column layui-table-page layui-hide">
+    <div class="layui-inline layui-table-pageview" id="layui-table-page{{=d.index}}"></div>
+  </div>
+`;
 
 var _WIN = $(window);
 var _DOC = $(document);
@@ -463,7 +488,6 @@ Class.prototype.render = function (type) {
       laytpl(TPL_MAIN, {
         open: '{{', // 标签符前缀
         close: '}}', // 标签符后缀
-        tagStyle: 'legacy',
       }).render({
         data: options,
         index: that.index, //索引
@@ -676,14 +700,7 @@ Class.prototype.renderStyle = function () {
           cellMaxHeight +
           '; white-space: normal; text-overflow: clip;}',
         '> td:hover > .layui-table-cell{overflow: auto;}',
-      ].concat(
-        device.ie
-          ? [
-              '.layui-table-edit{height: ' + cellMaxHeight + ';}',
-              'td[data-edit]:hover:after{height: ' + cellMaxHeight + ';}',
-            ]
-          : [],
-      ),
+      ],
       function (i, val) {
         val && text.push(trClassName + ' ' + val);
       },
@@ -811,27 +828,21 @@ Class.prototype.renderToolbar = function () {
           return layer.tips(i18n.$t('table.tools.export.noDataPrompt'), elem, {
             tips: 3,
           });
-        if (device.ie) {
-          layer.tips(i18n.$t('table.tools.export.compatPrompt'), elem, {
-            tips: 3,
-          });
-        } else {
-          openPanel({
-            list: (function () {
-              return [
-                '<li data-type="csv">' +
-                  i18n.$t('table.tools.export.csvText') +
-                  '</li>',
-              ].join('');
-            })(),
-            done: function (panel, list) {
-              list.on('click', function () {
-                var type = $(this).data('type');
-                table.exportFile.call(that, options.id, null, type);
-              });
-            },
-          });
-        }
+        openPanel({
+          list: (function () {
+            return [
+              '<li data-type="csv">' +
+                i18n.$t('table.tools.export.csvText') +
+                '</li>',
+            ].join('');
+          })(),
+          done: function (panel, list) {
+            list.on('click', function () {
+              var type = $(this).data('type');
+              table.exportFile.call(that, options.id, null, type);
+            });
+          },
+        });
       },
     },
     print: {
@@ -2523,13 +2534,13 @@ Class.prototype.events = function () {
       that.renderForm();
 
       panel.on('click', function (e) {
-        layui.stope(e);
+        e.stopPropagation();
       });
 
       sets.done && sets.done(panel, list);
     };
 
-    layui.stope(e);
+    e.stopPropagation();
     _DOC.trigger('table.tool.panel.remove');
     layer.close(that.tipsIndex);
 
@@ -2741,7 +2752,7 @@ Class.prototype.events = function () {
       var othis = $(this);
       var index = othis.index();
       var field = othis.parents('th').eq(0).data('field');
-      layui.stope(e);
+      e.stopPropagation();
       if (index === 0) {
         that.sort({
           field: field,
@@ -2835,7 +2846,7 @@ Class.prototype.events = function () {
       });
     }
 
-    layui.stope(e);
+    e.stopPropagation();
 
     // 事件
     layui.event.call(
@@ -2861,7 +2872,7 @@ Class.prototype.events = function () {
     var checked = radio[0].checked;
     var index = radio.parents('tr').eq(0).data('index');
 
-    layui.stope(e);
+    e.stopPropagation();
     if (radio[0].disabled) return false;
 
     // 标注选中样式
@@ -2991,7 +3002,7 @@ Class.prototype.events = function () {
       })(othis.data('content') || data[field]);
       othis.find('.' + ELEM_EDIT)[0] || othis.append(input);
       input.focus();
-      e && layui.stope(e);
+      e?.stopPropagation();
     }
   };
 
@@ -3189,7 +3200,7 @@ Class.prototype.events = function () {
     }
 
     othis.remove();
-    layui.stope(e);
+    e.stopPropagation();
   };
 
   // 表格主体单元格展开事件
@@ -3228,12 +3239,12 @@ Class.prototype.events = function () {
   that.layBody
     .on('click', '*[lay-event]', function (e) {
       toolFn.call(this);
-      layui.stope(e);
+      e.stopPropagation();
     })
     .on('dblclick', '*[lay-event]', function (e) {
       //行工具条双击事件
       toolFn.call(this, 'toolDouble');
-      layui.stope(e);
+      e.stopPropagation();
     });
 
   // 同步滚动条
@@ -3324,8 +3335,6 @@ Class.prototype.getContentWidth = function (elem) {
   if (
     // document
     elem[0].nodeType === 9 ||
-    // IE 中 border-box 盒模型，getComputedStyle 得到的 width/height 是按照 content-box 计算出来的
-    (lay.ie && elem.css('box-sizing') === 'border-box') ||
     elem.css('display') === 'none'
   ) {
     return elem.width();
@@ -3734,8 +3743,6 @@ table.exportFile = function (id, data, opts) {
     xls: 'application/vnd.ms-excel',
   }[type];
   var alink = document.createElement('a');
-
-  if (device.ie) return hint.error('IE_NOT_SUPPORT_EXPORTS');
 
   // 处理 treeTable 数据
   var isTreeTable = config.tree && config.tree.view;

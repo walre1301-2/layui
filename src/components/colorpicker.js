@@ -6,7 +6,7 @@
 import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
 var device = layui.device();
@@ -502,12 +502,11 @@ Class.prototype.side = function () {
       //回调更改的颜色
       options.change &&
         options.change(
-          $.trim(
-            that.elemPicker
-              .find('.' + CONST.PICKER_INPUT)
-              .find('input')
-              .val(),
-          ),
+          that.elemPicker
+            .find('.' + CONST.PICKER_INPUT)
+            .find('input')
+            .val()
+            .trim(),
         );
     },
     //拖拽元素
@@ -547,7 +546,7 @@ Class.prototype.side = function () {
       change(h, _s, _b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -585,7 +584,7 @@ Class.prototype.side = function () {
       change(_h, s, b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -602,7 +601,7 @@ Class.prototype.side = function () {
     _b = b;
     _s = s;
     change(_h, s, b, _a);
-    layui.stope(e);
+    e.stopPropagation();
     e.preventDefault();
     needTrigger && choose.trigger('mousedown', e);
   });
@@ -622,7 +621,7 @@ Class.prototype.side = function () {
       e.preventDefault();
     };
 
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -761,7 +760,7 @@ Class.prototype.pickerEvents = function () {
 
     //确认
     confirm: function (othis, change) {
-      var value = $.trim(elemPickerInput.val()),
+      var value = elemPickerInput.val().trim(),
         colorValue,
         hsb;
 

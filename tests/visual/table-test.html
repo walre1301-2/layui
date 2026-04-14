@@ -61,11 +61,11 @@
 
     <script type="text/html" id="barDemo">
       <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
-      {{# if(layui.$.trim(d.email)){ }}
+      {{ if((d.email || '').trim()){ }}
       <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"
         >删除</a
       >
-      {{# } }}
+      {{ } }}
       <input
         type="checkbox"
         name="demoTableSwitch"
@@ -113,17 +113,10 @@
 
     <script src="./assets/dist/layui.js"></script>
     <script>
-      ((off) => {
-        if (!off) return;
-        layui.disuse('table').extend({
-          table:
-            '{/}https://cdn.jsdelivr.net/gh/layui/layui@2.7.6/src/modules/table',
-        });
-      })();
-
       layui.use(['table', 'dropdown'], () => {
         var $ = layui.$;
         var table = layui.table;
+        var layer = layui.layer;
         var laytpl = layui.laytpl;
         var dropdown = layui.dropdown;
         var form = layui.form;
@@ -336,7 +329,7 @@
                     align: 'center',
                     totalRow: !1 ? true : '{{= d.TOTAL_NUMS }} 分 😊',
                     templet:
-                      '<div><a href="" class="layui-table-link">{{= d[d.LAY_COL.field] }}</a> 分</div>',
+                      '<a href="" class="layui-table-link">{{= d[d.LAY_COL.field] }}</a> 分',
                   },
                   { field: 'ip', title: 'IP', width: 120, align: 'right' },
                   {

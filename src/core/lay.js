@@ -6,42 +6,11 @@
 import { layui } from './layui.js';
 
 var document = window.document;
-
-/**
- * 元素查找
- * @param {string | HTMLElement | JQuery} selector
- */
-var lay = function (selector) {
-  return new Class(selector);
-};
-
-// 构造器
-var Class = function (selector) {
-  var that = this;
-  var elem =
-    typeof selector === 'object'
-      ? (function () {
-          // 仅适配简单元素对象
-          return layui.isArray(selector) ? selector : [selector];
-        })()
-      : ((this.selector = selector),
-        document.querySelectorAll(selector || null));
-
-  lay.each(elem, function (index) {
-    that.push(elem[index]);
-  });
-};
+var lay = Object.create(null);
 
 var fnToString = Function.prototype.toString;
 var ObjectFunctionString = fnToString.call(Object);
 var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-/*
-  lay 对象操作
-*/
-
-Class.fn = Class.prototype = [];
-Class.fn.constructor = Class;
 
 /**
  * 将一个或多个对象合并到目标对象中
@@ -176,15 +145,8 @@ lay.ie = (function () {
     : false;
 })();
 
-/**
- * 获取 layui 常见方法，以便用于组件单独版
- */
-
-lay.layui = layui || {};
-lay.getPath = layui.cache.dir; // 获取当前 JS 所在目录
-lay.stope = layui.stope; // 中止冒泡
+// 遍历
 lay.each = function () {
-  // 遍历
   layui.each.apply(layui, arguments);
   return this;
 };
@@ -210,6 +172,22 @@ lay.digit = function (num, length) {
     str += '0';
   }
   return num < Math.pow(10, length) ? str + num : num;
+};
+
+/**
+ * 获取单个 DOM 元素
+ * @param {string | HTMLElement | JQuery} elem - 目标元素或选择器
+ * @returns {HTMLElement | null}
+ */
+var getElement = function (elem) {
+  if (!elem) return null;
+  if (typeof elem === 'string') {
+    return document.querySelector(elem);
+  }
+  if (elem.jquery || typeof elem.length === 'number') {
+    return elem[0] || null;
+  }
+  return elem;
 };
 
 /**
@@ -285,8 +263,8 @@ lay.autoIncrementer = function (key, opts = {}) {
 lay.getStyleRules = function (style, callback) {
   if (!style) return;
 
-  var sheet = style.sheet || style.styleSheet || {};
-  var rules = sheet.cssRules || sheet.rules;
+  var sheet = style.sheet || {};
+  var rules = sheet.cssRules || [];
 
   if (typeof callback === 'function') {
     layui.each(rules, function (i, item) {
@@ -327,12 +305,7 @@ lay.style = function (options) {
   if (!styleText) return;
 
   // 添加样式
-  if ('styleSheet' in style) {
-    style.setAttribute('type', 'text/css');
-    style.styleSheet.cssText = styleText;
-  } else {
-    style.innerHTML = styleText;
-  }
+  style.innerHTML = styleText;
 
   // ID
   style.id =
@@ -345,9 +318,12 @@ lay.style = function (options) {
 
   // 是否向目标容器中追加 style 元素
   if (target) {
-    var styleElem = lay(target).find('#' + style.id);
-    styleElem[0] && styleElem.remove();
-    lay(target).append(style);
+    var targetElem = getElement(target);
+    if (!targetElem) return style;
+
+    var styleElem = targetElem.querySelector('#' + style.id);
+    styleElem?.remove();
+    targetElem.appendChild(style);
   }
 
   return style;
@@ -390,7 +366,7 @@ lay.position = function (target, elem, opts) {
   opts = opts || {};
 
   // 如果绑定的是 document 或 body 元素，则直接获取鼠标坐标
-  if (target === document || target === lay('body')[0]) {
+  if (target === document || target === document.body) {
     opts.clickType = 'right';
   }
 
@@ -516,9 +492,9 @@ lay.options = function (elem, opts) {
 
   if (elem === document) return {};
 
-  var othis = lay(elem);
   var attrName = opts.attr || 'lay-options';
-  var attrValue = othis.attr(attrName);
+  var targetElem = getElement(elem);
+  var attrValue = targetElem ? targetElem.getAttribute(attrName) : null;
 
   try {
     /**
@@ -550,7 +526,7 @@ lay.options = function (elem, opts) {
  * ```
  */
 lay.isTopElem = function (elem) {
-  var topElems = [document, lay('body')[0]],
+  var topElems = [document, document.body],
     matched = false;
   lay.each(topElems, function (index, item) {
     if (item === elem) {
@@ -662,7 +638,7 @@ lay.touchEventsSupported = function () {
  */
 lay.touchSwipe = function (elem, opts) {
   var options = opts;
-  var targetElem = lay(elem)[0];
+  var targetElem = getElement(elem);
   var preventDefault =
     'preventDefault' in options ? options.preventDefault : true;
 
@@ -743,63 +719,14 @@ lay.touchSwipe = function (elem, opts) {
 };
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | AddEventListenerOptions) => any}*/
-lay.addEvent = (function () {
-  if (document.addEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.addEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var listener = function (e) {
-        e.target = e.srcElement;
-        fn.call(elem, e);
-      };
-      listener._rawFn = fn;
-      if (!elem[eventsCacheName]) {
-        elem[eventsCacheName] = [];
-      }
-      var include = false;
-      lay.each(elem[eventsCacheName], function (_, listener) {
-        if (listener._rawFn === fn) {
-          include = true;
-          return true;
-        }
-      });
-      if (!include) {
-        elem[eventsCacheName].push(listener);
-        elem.attachEvent('on' + eventName, listener);
-      }
-    };
-  }
-})();
+lay.addEvent = function (elem, eventName, fn, options) {
+  elem.addEventListener(eventName, fn, options);
+};
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | EventListenerOptions) => any}*/
-lay.removeEvent = (function () {
-  if (document.removeEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.removeEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var events = elem[eventsCacheName];
-      if (layui.isArray(events)) {
-        var newEvents = [];
-        lay.each(events, function (_, listener) {
-          if (listener._rawFn === fn) {
-            elem.detachEvent('on' + eventName, listener);
-          } else {
-            newEvents.push(listener);
-          }
-        });
-        elem[eventsCacheName] = newEvents;
-      }
-    };
-  }
-})();
+lay.removeEvent = function (elem, eventName, fn, options) {
+  elem.removeEventListener(eventName, fn, options);
+};
 
 /**
  * 绑定指定元素外部的点击事件
@@ -824,7 +751,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   var listener = function (event) {
     var el = target;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     var eventPath = getEventPath(event);
 
     if (!el || el === eventTarget || eventPath.indexOf(el) !== -1) {
@@ -838,13 +765,13 @@ lay.onClickOutside = function (target, handler, options) {
   };
 
   function shouldIgnore(event, eventPath) {
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     for (var i = 0; i < ignore.length; i++) {
       var target = ignore[i];
       if (typeof target === 'string') {
         var targetElements = document.querySelectorAll(target);
         for (var j = 0; j < targetElements.length; j++) {
-          var targetEl = targetElements[i];
+          var targetEl = targetElements[j];
           if (targetEl === eventTarget || eventPath.indexOf(targetEl) !== -1) {
             return true;
           }
@@ -862,7 +789,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   function getEventPath(event) {
     var path = (event.composedPath && event.composedPath()) || event.path;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
 
     if (path !== null && path !== undefined) {
       return path;
@@ -881,14 +808,10 @@ lay.onClickOutside = function (target, handler, options) {
   }
 
   function bindEventListener(elem, eventName, handler, opts) {
-    elem.addEventListener
-      ? elem.addEventListener(eventName, handler, opts)
-      : elem.attachEvent('on' + eventName, handler);
+    elem.addEventListener(eventName, handler, opts);
 
     return function () {
-      elem.removeEventListener
-        ? elem.removeEventListener(eventName, handler, opts)
-        : elem.detachEvent('on' + eventName, handler);
+      elem.removeEventListener(eventName, handler, opts);
     };
   }
 
@@ -1170,202 +1093,6 @@ lay.flatToTree = function (data, options) {
 
     return acc;
   }, []);
-};
-
-/*
- * lay 元素操作
- */
-
-// 追加字符
-Class.addStr = function (str, new_str) {
-  str = str.replace(/\s+/, ' ');
-  new_str = new_str.replace(/\s+/, ' ').split(' ');
-  lay.each(new_str, function (ii, item) {
-    if (!new RegExp('\\b' + item + '\\b').test(str)) {
-      str = str + ' ' + item;
-    }
-  });
-  return str.replace(/^\s|\s$/, '');
-};
-
-// 移除值
-Class.removeStr = function (str, new_str) {
-  str = str.replace(/\s+/, ' ');
-  new_str = new_str.replace(/\s+/, ' ').split(' ');
-  lay.each(new_str, function (ii, item) {
-    var exp = new RegExp('\\b' + item + '\\b');
-    if (exp.test(str)) {
-      str = str.replace(exp, '');
-    }
-  });
-  return str.replace(/\s+/, ' ').replace(/^\s|\s$/, '');
-};
-
-// 查找子元素
-Class.fn.find = function (selector) {
-  // var that = this;
-  var elem = [];
-  var isObject = typeof selector === 'object';
-
-  this.each(function (i, item) {
-    var children =
-      isObject && item.contains(selector)
-        ? selector
-        : item.querySelectorAll(selector || null);
-
-    lay.each(children, function (index, child) {
-      elem.push(child);
-    });
-  });
-
-  return lay(elem);
-};
-
-// 元素遍历
-Class.fn.each = function (fn) {
-  return lay.each.call(this, this, fn);
-};
-
-// 添加 className
-Class.fn.addClass = function (className, type) {
-  return this.each(function (index, item) {
-    item.className = Class[type ? 'removeStr' : 'addStr'](
-      item.className,
-      className,
-    );
-  });
-};
-
-// 移除 className
-Class.fn.removeClass = function (className) {
-  return this.addClass(className, true);
-};
-
-// 是否包含 css 类
-Class.fn.hasClass = function (className) {
-  var has = false;
-  this.each(function (index, item) {
-    if (new RegExp('\\b' + className + '\\b').test(item.className)) {
-      has = true;
-    }
-  });
-  return has;
-};
-
-// 添加或获取 css style
-Class.fn.css = function (key, value) {
-  var that = this;
-  var parseValue = function (v) {
-    return isNaN(v) ? v : v + 'px';
-  };
-  return typeof key === 'string' && value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].style[key];
-      })()
-    : that.each(function (index, item) {
-        typeof key === 'object'
-          ? lay.each(key, function (thisKey, thisValue) {
-              item.style[thisKey] = parseValue(thisValue);
-            })
-          : (item.style[key] = parseValue(value));
-      });
-};
-
-// 添加或获取宽度
-Class.fn.width = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].offsetWidth; // 此处还需做兼容
-      })()
-    : that.each(function () {
-        that.css('width', value);
-      });
-};
-
-// 添加或获取高度
-Class.fn.height = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].offsetHeight; // 此处还需做兼容
-      })()
-    : that.each(function () {
-        that.css('height', value);
-      });
-};
-
-// 添加或获取属性
-Class.fn.attr = function (key, value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].getAttribute(key);
-      })()
-    : that.each(function (index, item) {
-        item.setAttribute(key, value);
-      });
-};
-
-// 移除属性
-Class.fn.removeAttr = function (key) {
-  return this.each(function (index, item) {
-    item.removeAttribute(key);
-  });
-};
-
-// 设置或获取 HTML 内容
-Class.fn.html = function (html) {
-  var that = this;
-  return html === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].innerHTML;
-      })()
-    : this.each(function (index, item) {
-        item.innerHTML = html;
-      });
-};
-
-// 设置或获取值
-Class.fn.val = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].value;
-      })()
-    : this.each(function (index, item) {
-        item.value = value;
-      });
-};
-
-// 追加内容
-Class.fn.append = function (elem) {
-  return this.each(function (index, item) {
-    typeof elem === 'object'
-      ? item.appendChild(elem)
-      : (item.innerHTML = item.innerHTML + elem);
-  });
-};
-
-// 移除内容
-Class.fn.remove = function (elem) {
-  return this.each(function (index, item) {
-    elem ? item.removeChild(elem) : item.parentNode.removeChild(item);
-  });
-};
-
-// 事件绑定
-Class.fn.on = function (eventName, fn, options) {
-  return this.each(function (index, item) {
-    lay.addEvent(item, eventName, fn, options);
-  });
-};
-
-// 解除事件
-Class.fn.off = function (eventName, fn, options) {
-  return this.each(function (index, item) {
-    lay.removeEvent(item, eventName, fn, options);
-  });
 };
 
 export { lay };
