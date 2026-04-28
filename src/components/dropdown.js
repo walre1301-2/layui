@@ -3,14 +3,13 @@
  * 下拉菜单组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { laytpl } from '../core/laytpl.js';
 import { util } from './util.js';
 
-var device = layui.device();
+var device = lay.device();
 var clickOrMousedown = device.mobile ? 'touchstart' : 'mousedown';
 
 // 模块名
@@ -41,7 +40,7 @@ var dropdown = {
 
   // 事件
   on: function (events, callback) {
-    return layui.onevent.call(this, MOD_NAME, events, callback);
+    return lay.onevent.call(this, MOD_NAME, events, callback);
   },
 };
 
@@ -129,7 +128,7 @@ Class.prototype.init = function (rerender, type) {
   // 若 elem 非唯一
   var elem = $(options.elem);
   if (elem.length > 1) {
-    layui.each(elem, function () {
+    elem.each(function () {
       dropdown.render(
         $.extend({}, options, {
           elem: this,
@@ -210,7 +209,7 @@ Class.prototype.render = function (type) {
   var eachItemView = function (views, data) {
     // var views = [];
 
-    layui.each(data, function (index, item) {
+    data.forEach(function (item) {
       // 是否存在子级
       var isChild =
         item[customName.children] && item[customName.children].length > 0;
@@ -409,7 +408,7 @@ Class.prototype.render = function (type) {
 
   // 阻止全局事件
   mainElem.find('.layui-menu').on(clickOrMousedown, function (e) {
-    layui.stope(e);
+    e.stopPropagation();
   });
 
   // 触发菜单列表事件
@@ -430,7 +429,7 @@ Class.prototype.render = function (type) {
           : null;
 
       ret === false || isChild || that.remove();
-      layui.stope(e);
+      e.stopPropagation();
     }
   });
 
@@ -706,10 +705,14 @@ thisModule.spread = function (othis, isAccordion) {
       othis.parents('.' + STR_ITEM_PARENT).addClass(STR_ITEM_CHECKED2); // 添加父级菜单选中样式
 
       options.title =
-        options.title || $.trim(othis.children('.' + STR_MENU_TITLE).text());
+        options.title ||
+        othis
+          .children('.' + STR_MENU_TITLE)
+          .text()
+          .trim();
 
       // 触发事件
-      layui.event.call(this, MOD_NAME, 'click(' + filter + ')', options);
+      lay.event.call(this, MOD_NAME, 'click(' + filter + ')', options);
     }
   });
 
@@ -799,7 +802,7 @@ dropdown.reloadData = function () {
   );
 
   // 过滤与数据无关的参数
-  layui.each(args[1], function (key) {
+  Object.keys(args[1] || {}).forEach(function (key) {
     if (!dataParams.test(key)) {
       delete args[1][key];
     }

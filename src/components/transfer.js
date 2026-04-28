@@ -3,9 +3,8 @@
  * 穿梭框组件
  */
 
-import { layui } from '../core/layui.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 import { laytpl } from '../core/laytpl.js';
 import { form } from './form.js';
@@ -56,58 +55,55 @@ var component = componentBuilder({
     // 穿梭框模板
     var TPL_BOX = function (obj) {
       obj = obj || {};
-      return [
-        '<div class="layui-transfer-box" data-index="' + obj.index + '">',
-        '<div class="layui-transfer-header">',
-        '<input type="checkbox" name="' +
-          obj.checkAllName +
-          '" lay-filter="layTransferCheckbox" lay-type="all" lay-skin="primary" title="{{= d.data.title[' +
-          obj.index +
-          "] || 'list" +
-          (obj.index + 1) +
-          '\' }}">',
-        '</div>',
-        '{{ if(d.data.showSearch){ }}',
-        '<div class="layui-transfer-search">',
-        '<i class="layui-icon layui-icon-search"></i>',
-        '<input type="text" class="layui-input" placeholder="' +
-          i18n.$t('transfer.searchPlaceholder') +
-          '">',
-        '</div>',
-        '{{ } }}',
-        '<ul class="layui-transfer-data"></ul>',
-        '</div>',
-      ].join('');
+      return `
+        <div class="layui-transfer-box" data-index="${obj.index}">
+          <div class="layui-transfer-header">
+            <input
+              type="checkbox"
+              name="${obj.checkAllName}"
+              lay-filter="layTransferCheckbox"
+              lay-type="all"
+              lay-skin="primary"
+              title="{{= d.data.title[${obj.index}] || 'list${obj.index + 1}' }}">
+          </div>
+          {{ if(d.data.showSearch){ }}
+            <div class="layui-transfer-search">
+              <i class="layui-icon layui-icon-search"></i>
+              <input type="text" class="layui-input" placeholder="${i18n.$t('transfer.searchPlaceholder')}">
+            </div>
+          {{ } }}
+          <ul class="layui-transfer-data"></ul>
+        </div>
+      `;
     };
 
     // 主模板
-    var TPL_MAIN = [
-      '<div class="layui-transfer layui-form layui-border-box" lay-filter="LAY-transfer-{{= d.index }}">',
-      TPL_BOX({
-        index: 0,
-        checkAllName: 'layTransferLeftCheckAll',
-      }),
-      '<div class="layui-transfer-active">',
-      '<button type="button" class="layui-btn layui-btn-sm layui-btn-primary layui-btn-disabled" data-index="0">',
-      '<i class="layui-icon layui-icon-next"></i>',
-      '</button>',
-      '<button type="button" class="layui-btn layui-btn-sm layui-btn-primary layui-btn-disabled" data-index="1">',
-      '<i class="layui-icon layui-icon-prev"></i>',
-      '</button>',
-      '</div>',
-      TPL_BOX({
-        index: 1,
-        checkAllName: 'layTransferRightCheckAll',
-      }),
-      '</div>',
-    ].join('');
+    var TPL_MAIN = `
+      <div class="layui-transfer layui-form layui-border-box" lay-filter="LAY-transfer-{{= d.index }}">
+        ${TPL_BOX({
+          index: 0,
+          checkAllName: 'layTransferLeftCheckAll',
+        })}
+        <div class="layui-transfer-active">
+          <button type="button" class="layui-btn layui-btn-sm layui-btn-primary layui-btn-disabled" data-index="0">
+            <i class="layui-icon layui-icon-next"></i>
+          </button>
+          <button type="button" class="layui-btn layui-btn-sm layui-btn-primary layui-btn-disabled" data-index="1">
+            <i class="layui-icon layui-icon-prev"></i>
+          </button>
+        </div>
+        ${TPL_BOX({
+          index: 1,
+          checkAllName: 'layTransferRightCheckAll',
+        })}
+      </div>
+    `;
 
     // 解析模板
     var thisElem = (that.elem = $(
       laytpl(TPL_MAIN, {
         open: '{{', // 标签符前缀
         close: '}}', // 标签符后缀
-        tagStyle: 'modern',
       }).render({
         data: options,
         index: that.index, // 索引
@@ -192,23 +188,14 @@ Class.prototype.renderData = function () {
   that.parseData(function (item) {
     // 标注为 selected 的为右边的数据
     var _index = item.selected ? 1 : 0;
-    var listElem = [
-      '<li>',
-      '<input type="checkbox" name="' +
-        arr[_index].checkName +
-        '" lay-skin="primary" lay-filter="layTransferCheckbox" title="' +
-        item.title +
-        '"' +
-        (item.disabled ? ' disabled' : '') +
-        (item.checked ? ' checked' : '') +
-        ' value="' +
-        item.value +
-        '">',
-      '</li>',
-    ].join('');
+    var listElem = `
+      <li>
+        <input type="checkbox" name="${arr[_index].checkName}" lay-skin="primary" lay-filter="layTransferCheckbox" title="${item.title}"${item.disabled ? ' disabled' : ''}${item.checked ? ' checked' : ''} value="${item.value}">
+      </li>
+    `;
     // 按照 options.value 顺序排列右侧数据
     if (_index) {
-      layui.each(options.value, function (i, v) {
+      options.value.forEach(function (v, i) {
         if (v == item.value && item.selected) {
           arr[_index].views[i] = listElem;
         }
@@ -312,7 +299,7 @@ Class.prototype.parseData = function (callback) {
   var options = that.config;
   var newData = [];
 
-  layui.each(options.data, function (index, item) {
+  options.data.forEach(function (item) {
     // 解析格式
     item =
       (typeof options.parseData === 'function'
@@ -321,7 +308,7 @@ Class.prototype.parseData = function (callback) {
 
     newData.push((item = $.extend({}, item)));
 
-    layui.each(options.value, function (index2, item2) {
+    options.value.forEach(function (item2) {
       if (item2 == item.value) {
         item.selected = true;
       }
@@ -341,8 +328,8 @@ Class.prototype.getData = function (value) {
 
   that.setValue();
 
-  layui.each(value || options.value, function (index, item) {
-    layui.each(options.data, function (index2, item2) {
+  (value || options.value).forEach(function (item) {
+    options.data.forEach(function (item2) {
       delete item2.selected;
       if (item == item2.value) {
         selectedData.push(item2);

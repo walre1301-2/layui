@@ -1,13 +1,12 @@
 /**
- * util 工具组件
+ * util
+ * 工具组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
-
-var hint = layui.hint();
+import { log } from '../core/logger.js';
+import { $ } from 'jquery';
 
 // 引用自 dayjs
 // https://github.com/iamkun/dayjs/blob/v1.11.9/src/constant.js#L30
@@ -70,7 +69,7 @@ var util = {
     var elemTopBar;
 
     // 遍历生成 bars 节点
-    layui.each(options.bars, function (i, item) {
+    options.bars.forEach(function (item) {
       var elemBar = $('<li class="layui-icon">');
 
       // 设置 bar 相关属性
@@ -99,8 +98,8 @@ var util = {
       });
 
       // 自定义任意事件
-      if (layui.type(options.on) === 'object') {
-        layui.each(options.on, function (eventName, callback) {
+      if (lay.type(options.on) === 'object') {
+        Object.entries(options.on).forEach(function ([eventName, callback]) {
           elemBar.on(eventName, function () {
             var type = $(this).attr('lay-type');
             typeof callback === 'function' && callback.call(this, type);
@@ -324,7 +323,7 @@ var util = {
 
     if (!date.getDate())
       return (
-        hint.error('Invalid millisecond for "util.toDateString(millisecond)"'),
+        log('Invalid millisecond for "util.toDateString(millisecond)"'),
         ''
       );
 
@@ -519,9 +518,6 @@ var util = {
     return events;
   },
 };
-
-// 兼容旧版
-util.event = util.on;
 
 // 输出接口
 export { util };

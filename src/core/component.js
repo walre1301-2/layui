@@ -1,11 +1,10 @@
 /**
  * component
- * Layui 2 组件构建器
+ * 组件构建器
  */
 
-import { layui } from './layui.js';
 import { lay } from './lay.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 
 // export
 export function component(settings) {
@@ -52,7 +51,7 @@ export function component(settings) {
 
     // 事件
     on: function (events, callback) {
-      return layui.onevent.call(this, MOD_NAME, events, callback);
+      return lay.onevent.call(this, MOD_NAME, events, callback);
     },
   };
 
@@ -118,7 +117,7 @@ export function component(settings) {
 
     // 若 elem 非唯一，则拆分为多个实例
     if (elem.length > 1) {
-      layui.each(elem, function () {
+      elem.each(function () {
         component.render(
           $.extend({}, options, {
             elem: this,

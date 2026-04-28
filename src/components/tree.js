@@ -2,10 +2,9 @@
  * tree 树组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 import { layer } from './layer.js';
 import { form } from './form.js';
@@ -167,8 +166,8 @@ Class.prototype.reload = function (options, type) {
   var that = this;
 
   // 数组直接覆盖
-  layui.each(options, function (key, item) {
-    if (layui.type(item) === 'array') {
+  Object.entries(options).forEach(function ([key, item]) {
+    if (lay.type(item) === 'array') {
       delete that.config[key];
     }
   });
@@ -190,7 +189,7 @@ Class.prototype.tree = function (elem, children) {
   var data = children || options.data;
 
   // 遍历数据
-  layui.each(data, function (index, item) {
+  data.forEach(function (item) {
     var hasChild =
       item[customName.children] && item[customName.children].length > 0;
     var packDiv = $(
@@ -288,7 +287,7 @@ Class.prototype.tree = function (elem, children) {
           }
 
           if (typeof options.edit === 'object') {
-            layui.each(options.edit, function (i, val) {
+            options.edit.forEach(function (val) {
               arr.push(editIcon[val] || '');
             });
             return arr.join('') + '</div>';
@@ -510,9 +509,11 @@ Class.prototype.checkClick = function (elem, item) {
   var elemMain = entry.children('.' + CONST.ELEM_MAIN);
 
   // 点击复选框
-  elemMain.on('click', 'input[same="layuiTreeCheck"]', layui.stope);
+  elemMain.on('click', 'input[same="layuiTreeCheck"]', function (e) {
+    e.stopPropagation();
+  });
   elemMain.on('click', 'input[same="layuiTreeCheck"]+', function (e) {
-    layui.stope(e); // 阻止点击节点事件
+    e.stopPropagation(); // 阻止点击节点事件
 
     var elemCheckbox = $(this).prev();
     var checked = elemCheckbox.prop('checked');
@@ -543,7 +544,7 @@ Class.prototype.operate = function (elem, item) {
   entry
     .children('.layui-tree-btnGroup')
     .on('click', '.layui-icon', function (e) {
-      layui.stope(e); // 阻止节点操作
+      e.stopPropagation(); // 阻止节点操作
 
       var type = $(this).data('type');
       var packCont = elem.children('.' + CONST.ELEM_PACK);
@@ -591,7 +592,7 @@ Class.prototype.operate = function (elem, item) {
             var num = 1;
             var parentPack = elem.parent('.' + CONST.ELEM_PACK);
 
-            layui.each(siblings, function (index, i) {
+            siblings.each(function (_index, i) {
               if (!$(i).children('.' + CONST.ELEM_PACK)[0]) {
                 num = 0;
               }
@@ -789,7 +790,7 @@ Class.prototype.operate = function (elem, item) {
               var num = 1;
               var parentPack = elem.parent('.' + CONST.ELEM_PACK);
 
-              layui.each(siblings, function (index, i) {
+              siblings.each(function (_index, i) {
                 if (!$(i).children('.' + CONST.ELEM_PACK)[0]) {
                   num = 0;
                 }
@@ -970,8 +971,8 @@ Class.prototype.getChecked = function () {
 
   // 遍历节点
   var eachNodes = function (data, checkNode) {
-    layui.each(data, function (index, item) {
-      layui.each(checkedId, function (index2, item2) {
+    for (const item of data) {
+      for (const item2 of checkedId) {
         if (item[customName.id] == item2) {
           that.updateFieldValue(item, 'checked', true);
 
@@ -987,10 +988,10 @@ Class.prototype.getChecked = function () {
               cloneItem[customName.children],
             );
           }
-          return true;
+          break;
         }
-      });
-    });
+      }
+    }
   };
 
   eachNodes($.extend({}, options.data), checkedData);
@@ -1015,16 +1016,16 @@ Class.prototype.setChecked = function (checkedId) {
       .find('input[same="layuiTreeCheck"]');
     var checked = input.prop('checked');
 
-    layui.each(checkedId, function (_i, id) {
+    for (const id of checkedId) {
       if (thisId == id) {
-        if (input.prop('disabled')) return;
+        if (input.prop('disabled')) continue;
         if (!checked) {
           input.prop('checked', true);
           that.syncCheckedState(input, flatData[i]);
-          return true;
+          break;
         }
       }
-    });
+    }
   });
 };
 

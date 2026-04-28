@@ -7,16 +7,9 @@
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>util 组件 - layui</title>
-
     <link rel="stylesheet" href="./assets/dist/css/layui.css" />
-
-    <style>
-      body {
-        padding: 50px;
-      }
-    </style>
   </head>
-  <body>
+  <body class="layui-padding-5">
     <fieldset class="layui-elem-field">
       <legend>默认 body 委托元素</legend>
       <div class="layui-field-box">
@@ -83,7 +76,7 @@
 
     <script src="./assets/dist/layui.js"></script>
     <script>
-      layui.use(['lay', 'util', 'layer'], () => {
+      layui.use(() => {
         var $ = layui.$;
         var util = layui.util;
         var layer = layui.layer;
@@ -168,7 +161,7 @@
         util.on(
           'lay-bind',
           {
-            e1: layui.throttle(function (othis) {
+            e1: lay.throttle(function (othis) {
               layer.tips(othis.html(), this, { tips: 3 });
             }, 3000), // 3s 内不重复执行
             e2: () => {
@@ -200,7 +193,7 @@
             // 此处与委托在 body 上的事件共用了 e1 名称，以测试事件冒泡
             e1: function (othis, e) {
               this.innerHTML = 'click: ' + ((Math.random() * 100000) | 0);
-              layui.stope(e); // 阻止事件冒泡
+              e.stopPropagation(); // 阻止事件冒泡
             },
             e5: function (othis, e) {
               this.innerHTML = 'click: ' + ((Math.random() * 100000) | 0);
@@ -242,7 +235,7 @@
             var str = [obj.d, '天', obj.h, '时', obj.m, '分', obj.s, '秒'].join(
               ' ',
             );
-            lay('#test').html(str);
+            $('#test').html(str);
             util.countdown.timer = inst.timer; // 记录当前定时器，以便在重复渲染时清除。实际使用时不常用
           },
           done: (obj, inst) => {

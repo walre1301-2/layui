@@ -3,9 +3,8 @@
  * 轮播
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { component as componentBuilder } from '../core/component.js';
 
 // 创建组件
@@ -237,7 +236,7 @@ Class.prototype.indicator = function () {
       '<div class="' + CONST.ELEM_IND + '"><ul>',
       (function () {
         var li = [];
-        layui.each(that.elemItem, function (index) {
+        that.elemItem.each(function (index) {
           li.push(
             '<li' +
               (options.index === index ? ' class="layui-this"' : '') +
@@ -339,7 +338,7 @@ Class.prototype.slide = function (type, num) {
   };
 
   typeof options.change === 'function' && options.change(params);
-  layui.event.call(this, CONST.MOD_NAME, 'change(' + filter + ')', params);
+  lay.event.call(this, CONST.MOD_NAME, 'change(' + filter + ')', params);
 };
 
 // 事件处理

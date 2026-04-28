@@ -61,11 +61,11 @@
 
     <script type="text/html" id="barDemo">
       <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
-      {{# if(layui.$.trim(d.email)){ }}
+      {{ if((d.email || '').trim()){ }}
       <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"
         >删除</a
       >
-      {{# } }}
+      {{ } }}
       <input
         type="checkbox"
         name="demoTableSwitch"
@@ -113,20 +113,8 @@
 
     <script src="./assets/dist/layui.js"></script>
     <script>
-      ((off) => {
-        if (!off) return;
-        layui.disuse('table').extend({
-          table:
-            '{/}https://cdn.jsdelivr.net/gh/layui/layui@2.7.6/src/modules/table',
-        });
-      })();
-
-      layui.use(['table', 'dropdown'], () => {
-        var $ = layui.$;
-        var table = layui.table;
-        var laytpl = layui.laytpl;
-        var dropdown = layui.dropdown;
-        var form = layui.form;
+      layui.use(() => {
+        const { lay, $, table, layer, laytpl, dropdown, form } = layui;
 
         // 仅用于各类测试的表头
         var test_cols = [
@@ -209,11 +197,7 @@
 
           totalRow: true,
           pagebar: '#pagebarDemo', // 分页栏模板
-          page: !1
-            ? false
-            : {
-                // curr: layui.data('tableCache').curr || 1 // 读取记录中的页码，赋值给起始页
-              },
+          page: !1 ? false : {},
           limit: 30,
           toolbar: '#toolbarDemo',
           defaultToolbar: [
@@ -252,7 +236,7 @@
               layEvent: 'LAYTABLE_TIPS',
               icon: 'layui-icon-tips',
               onClick: (obj) => {
-                layer.alert('Table for layui-v' + layui.v);
+                layer.alert('Table for layui-v' + layui.version);
               },
             },
           ],
@@ -297,8 +281,7 @@
                     hide: 0,
                     edit: 'text',
                     style: 'background-color: #fafafa; color: red;',
-                    templet: (d) =>
-                      '<em>' + layui.util.escape(d.email) + '</em>',
+                    templet: (d) => '<em>' + lay.escape(d.email) + '</em>',
                   },
                   {
                     field: 'sex',
@@ -336,7 +319,7 @@
                     align: 'center',
                     totalRow: !1 ? true : '{{= d.TOTAL_NUMS }} 分 😊',
                     templet:
-                      '<div><a href="" class="layui-table-link">{{= d[d.LAY_COL.field] }}</a> 分</div>',
+                      '<a href="" class="layui-table-link">{{= d[d.LAY_COL.field] }}</a> 分',
                   },
                   { field: 'ip', title: 'IP', width: 120, align: 'right' },
                   {
@@ -376,14 +359,6 @@
           },
           done: function (res, curr, count) {
             var id = this.id;
-
-            // 记录当前页码
-            /*
-      layui.data('tableCache', {
-        key: 'curr',
-        value: curr
-      });
-      */
 
             // 设置选中行状态
             dropdown.render({
@@ -642,13 +617,13 @@
           switch (obj.event) {
             case 'getCheckData': {
               var data = checkStatus.data;
-              layer.alert(layui.util.escape(JSON.stringify(data)));
+              layer.alert(lay.escape(JSON.stringify(data)));
               break;
             }
             case 'getData': {
               var getData = table.getData(id);
               console.log(getData);
-              layer.alert(layui.util.escape(JSON.stringify(getData)));
+              layer.alert(lay.escape(JSON.stringify(getData)));
               break;
             }
             case 'isAll':
@@ -675,7 +650,7 @@
           const { event } = obj;
           console.log(obj);
           if (event === 'gender') {
-            layer.alert(layui.util.escape(JSON.stringify(obj.col)), {
+            layer.alert(lay.escape(JSON.stringify(obj.col)), {
               title: '当前列属性',
             });
           }

@@ -3,11 +3,10 @@
  * 导航菜单组件
  */
 
-import { layui } from '../core/layui.js';
-import $ from 'jquery';
+import { lay } from '../core/lay.js';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
-var device = layui.device();
 var SUPER_MOD_NAME = 'element'; // 所属的超级模块名，确保向下兼容
 
 // 创建组件
@@ -85,15 +84,12 @@ var component = componentBuilder({
         }
 
         // 渐显滑块并适配宽度
-        timer[index] = setTimeout(
-          function () {
-            bar.css({
-              width: child[0] ? 0 : othis.width(),
-              opacity: child[0] ? 0 : 1,
-            });
-          },
-          device.ie && device.ie < 10 ? 0 : TIME,
-        );
+        timer[index] = setTimeout(function () {
+          bar.css({
+            width: child[0] ? 0 : othis.width(),
+            opacity: child[0] ? 0 : 1,
+          });
+        }, TIME);
 
         // 显示子菜单
         clearTimeout(timeEnd[index]);
@@ -261,7 +257,7 @@ var events = {
       }
     }
 
-    layui.event.call(this, SUPER_MOD_NAME, 'nav(' + filter + ')', othis);
+    lay.event.call(this, SUPER_MOD_NAME, 'nav(' + filter + ')', othis);
   },
 };
 

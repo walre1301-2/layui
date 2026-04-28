@@ -2,7 +2,6 @@
  * laypage 分页组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
 
@@ -217,7 +216,7 @@ Class.prototype.view = function () {
       };
 
       // 条目选项列表
-      layui.each(config.limits, function (index, item) {
+      config.limits.forEach(function (item) {
         elemArr.push(
           '<option value="' +
             item +
@@ -275,7 +274,7 @@ Class.prototype.view = function () {
       '">',
     (function () {
       var plate = [];
-      layui.each(config.layout, function (index, item) {
+      config.layout.forEach(function (item) {
         if (views[item]) {
           plate.push(views[item]);
         }
@@ -400,13 +399,7 @@ var laypage = {
     return o.index;
   },
   on: function (elem, even, fn) {
-    elem.attachEvent
-      ? elem.attachEvent('on' + even, function (e) {
-          // for ie
-          e.target = e.srcElement;
-          fn.call(elem, e);
-        })
-      : elem.addEventListener(even, fn, false);
+    elem.addEventListener(even, fn, false);
     return this;
   },
 };

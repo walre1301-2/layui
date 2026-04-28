@@ -3,13 +3,12 @@
  * 颜色选择组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
-var device = layui.device();
+var device = lay.device();
 var clickOrMousedown = device.mobile ? 'click' : 'mousedown';
 
 // 创建组件
@@ -298,7 +297,7 @@ Class.prototype.renderPicker = function () {
       (function () {
         if (options.predefine) {
           var list = ['<div class="layui-colorpicker-main-pre">'];
-          layui.each(options.colors, function (i, v) {
+          options.colors.forEach(function (v) {
             list.push(
               [
                 '<div class="layui-colorpicker-pre' +
@@ -502,12 +501,11 @@ Class.prototype.side = function () {
       //回调更改的颜色
       options.change &&
         options.change(
-          $.trim(
-            that.elemPicker
-              .find('.' + CONST.PICKER_INPUT)
-              .find('input')
-              .val(),
-          ),
+          that.elemPicker
+            .find('.' + CONST.PICKER_INPUT)
+            .find('input')
+            .val()
+            .trim(),
         );
     },
     //拖拽元素
@@ -547,7 +545,7 @@ Class.prototype.side = function () {
       change(h, _s, _b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -585,7 +583,7 @@ Class.prototype.side = function () {
       change(_h, s, b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -602,7 +600,7 @@ Class.prototype.side = function () {
     _b = b;
     _s = s;
     change(_h, s, b, _a);
-    layui.stope(e);
+    e.stopPropagation();
     e.preventDefault();
     needTrigger && choose.trigger('mousedown', e);
   });
@@ -622,7 +620,7 @@ Class.prototype.side = function () {
       e.preventDefault();
     };
 
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -661,30 +659,26 @@ Class.prototype.side = function () {
 
   if (!lay.touchEventsSupported()) return;
   // 触摸事件模拟
-  layui.each(
-    [
-      { elem: side, eventType: 'mousedown' },
-      { elem: alphacolor, eventType: 'mousedown' },
-      { elem: basis, eventType: 'mousedown' },
-    ],
-    function (i, obj) {
-      lay.touchSwipe(obj.elem, {
-        onTouchStart: function () {
-          needTrigger = false;
-          needStopPropagation = false;
-        },
-        onTouchMove: function (e) {
-          touchHandler(e, obj.eventType);
-        },
-        onTouchEnd: function () {
-          elemMove.remove();
-          needTrigger = true;
-          needStopPropagation = true;
-        },
-      });
-    },
-  );
-
+  [
+    { elem: side, eventType: 'mousedown' },
+    { elem: alphacolor, eventType: 'mousedown' },
+    { elem: basis, eventType: 'mousedown' },
+  ].forEach(function (obj) {
+    lay.touchSwipe(obj.elem, {
+      onTouchStart: function () {
+        needTrigger = false;
+        needStopPropagation = false;
+      },
+      onTouchMove: function (e) {
+        touchHandler(e, obj.eventType);
+      },
+      onTouchEnd: function () {
+        elemMove.remove();
+        needTrigger = true;
+        needStopPropagation = true;
+      },
+    });
+  });
   function touchHandler(event, eventType) {
     var pointer = event.touches[0];
     var simulatedEvent = document.createEvent('MouseEvent');
@@ -761,7 +755,7 @@ Class.prototype.pickerEvents = function () {
 
     //确认
     confirm: function (othis, change) {
-      var value = $.trim(elemPickerInput.val()),
+      var value = elemPickerInput.val().trim(),
         colorValue,
         hsb;
 

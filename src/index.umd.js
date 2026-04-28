@@ -3,10 +3,11 @@
  */
 
 // 导入核心模块
-import { layui } from './core/layui.js';
-import { lay } from './core/lay.js';
+import { lay, use, version } from './core/lay.js';
+import { loader } from './core/loader.js';
 import { laytpl } from './core/laytpl.js';
 import { i18n } from './core/i18n.js';
+import { router } from './core/router.js';
 import { default as jquery, default as $ } from 'jquery';
 import { component, componentBuilder } from './core/component.js';
 
@@ -17,7 +18,6 @@ import { layer } from './components/layer.js';
 import { dropdown } from './components/dropdown.js';
 import { slider } from './components/slider.js';
 import { colorpicker } from './components/colorpicker.js';
-import { tab } from './components/tab.js';
 import { nav } from './components/nav.js';
 import { breadcrumb } from './components/breadcrumb.js';
 import { progress } from './components/progress.js';
@@ -36,21 +36,17 @@ import { flow } from './components/flow.js';
 import { util } from './components/util.js';
 import { code } from './components/code.js';
 
-// 兼容 v2
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  window.layui = layui;
-  window.lay = lay;
-  window.layer = layer;
-  layui.$ = jquery;
-}
-
-Object.assign(layui, {
+const layui = {
   lay,
+  use,
+  version,
+  loader,
   laytpl,
   i18n,
+  router,
   $,
   jquery,
-  component, // 兼容
+  component,
   componentBuilder,
   layer,
   laydate,
@@ -58,7 +54,6 @@ Object.assign(layui, {
   dropdown,
   slider,
   colorpicker,
-  tab,
   nav,
   breadcrumb,
   progress,
@@ -76,6 +71,6 @@ Object.assign(layui, {
   flow,
   util,
   code,
-});
+};
 
 export default layui;

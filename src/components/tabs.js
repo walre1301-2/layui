@@ -3,8 +3,8 @@
  * 标签页组件
  */
 
-import { layui } from '../core/layui.js';
-import $ from 'jquery';
+import { lay } from '../core/lay.js';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
 // 创建组件
@@ -55,7 +55,7 @@ var component = componentBuilder({
     };
 
     // 若 header 选项类型为数组
-    if (layui.type(options.header) === 'array') {
+    if (lay.type(options.header) === 'array') {
       // if (options.header.length === 0) return;
 
       // 给任意元素绑定 tabs 切换功能
@@ -71,11 +71,11 @@ var component = componentBuilder({
         var bodyElem = $('<div class="layui-tabs-body"></div>');
 
         // 生成标签项
-        layui.each(options.header, function (i, item) {
+        options.header.forEach(function (item) {
           var elemHeaderItem = that.renderHeaderItem(item);
           headerElem.append(elemHeaderItem);
         });
-        layui.each(options.body, function (i, item) {
+        options.body.forEach(function (item) {
           var elemBodyItem = that.renderBodyItem(item);
           bodyElem.append(elemBodyItem);
         });
@@ -88,7 +88,7 @@ var component = componentBuilder({
     }
 
     // 若 body 选项类型为数组
-    if (layui.type(options.body) === 'array') {
+    if (lay.type(options.body) === 'array') {
       if (typeof options.body[0] === 'string') {
         that.documentElem = $(document);
         that.bodyElem = options.body.concat();
@@ -116,7 +116,7 @@ var component = componentBuilder({
     typeof options.afterRender === 'function' && options.afterRender(data);
 
     // 渲染成功后的事件
-    layui.event.call(
+    lay.event.call(
       options.elem[0],
       component.CONST.MOD_NAME,
       'afterRender(' + options.id + ')',
@@ -150,7 +150,7 @@ var component = componentBuilder({
       $(window).on('resize', function () {
         clearTimeout(timer);
         timer = setTimeout(function () {
-          layui.each(component.cache.id, function (key) {
+          Object.keys(component.cache.id).forEach(function (key) {
             var that = component.getInst(key);
             if (!that) return;
             that.roll('init');
@@ -264,7 +264,7 @@ Class.prototype.close = function (thisHeaderItem, force) {
 
   // 标签关闭前的事件。若非强制关闭，可则根据事件的返回结果决定是否关闭
   if (!force) {
-    var closable = layui.event.call(
+    var closable = lay.event.call(
       thisHeaderItem[0],
       component.CONST.MOD_NAME,
       'beforeClose(' + options.id + ')',
@@ -298,7 +298,7 @@ Class.prototype.close = function (thisHeaderItem, force) {
   data = that.data();
 
   // 标签关闭后的事件
-  layui.event.call(
+  lay.event.call(
     data.thisHeaderItem[0],
     component.CONST.MOD_NAME,
     'afterClose(' + options.id + ')',
@@ -378,7 +378,7 @@ Class.prototype.closeMult = function (mode, index) {
   data = that.data();
 
   // 标签关闭后的事件
-  layui.event.call(
+  lay.event.call(
     data.thisHeaderItem[0],
     component.CONST.MOD_NAME,
     'afterClose(' + options.id + ')',
@@ -416,7 +416,7 @@ Class.prototype.change = function (thisHeaderItem, force) {
 
   // 标签关闭前的事件。若非强制关闭，可则根据事件的返回结果决定是否关闭
   if (!force) {
-    var enable = layui.event.call(
+    var enable = lay.event.call(
       thisHeaderItem[0],
       component.CONST.MOD_NAME,
       'beforeChange(' + options.id + ')',
@@ -457,7 +457,7 @@ Class.prototype.change = function (thisHeaderItem, force) {
   data = that.data();
 
   // 标签切换后的事件
-  layui.event.call(
+  lay.event.call(
     data.thisHeaderItem[0],
     component.CONST.MOD_NAME,
     'afterChange(' + options.id + ')',
@@ -875,7 +875,7 @@ $.extend(component, {
 });
 
 // 初始化渲染
-$(function () {
+lay.use(function () {
   component.render();
 });
 
