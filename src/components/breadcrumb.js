@@ -3,7 +3,7 @@
  * 面包屑导航组件
  */
 
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
 // 创建组件
@@ -12,7 +12,7 @@ var component = componentBuilder({
 
   // 默认配置
   config: {
-    elem: '.layui-breadcrumb',
+    elem: '.lay-breadcrumb',
   },
 
   render: function () {

@@ -3,9 +3,9 @@
  * 流加载组件
  */
 
-import { layui } from '../core/layui.js';
+import { loader } from '../core/loader.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
 // 创建组件
@@ -14,8 +14,8 @@ var component = componentBuilder({
 
   CONST: {
     ELEM_LOAD:
-      '<i class="layui-anim layui-anim-rotate layui-anim-loop layui-icon layui-icon-loading-1"></i>',
-    ELEM_MORE: 'layui-flow-more',
+      '<i class="lay-anim lay-anim-rotate lay-anim-loop lay-icon lay-icon-loading-1"></i>',
+    ELEM_MORE: 'lay-flow-more',
     FLOW_SCROLL_EVENTS: 'scroll.lay_flow_scroll',
     LAZYIMG_SCROLL_EVENTS: 'scroll.lay_flow_lazyimg_scroll',
   },
@@ -190,9 +190,8 @@ $.extend(component, {
         ) {
           if (item.attr('lay-src')) {
             var src = item.attr('lay-src');
-            layui.img(
-              src,
-              function () {
+            loader.image(src, {
+              success() {
                 var next = $elem.eq(index);
                 item.attr('src', src).removeAttr('lay-src');
 
@@ -200,10 +199,10 @@ $.extend(component, {
                 next[0] && fn(next);
                 index++;
               },
-              function () {
+              error() {
                 item.removeAttr('lay-src');
               },
-            );
+            });
           }
         }
       };

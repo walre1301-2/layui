@@ -219,18 +219,19 @@ util.openWin({
 | elem | 触发事件的委托元素 | string \| HTMLElement \| JQuery | - |
 | trigger | 事件触发的方式 | string | `click` |
 
-<pre class="layui-code" lay-options="{preview: true, codeStyle: 'height: 535px;', layout: ['code', 'preview'], tools: ['full']}">
+<pre class="lay-code" lay-options="{preview: true, codeStyle: 'height: 535px;', layout: ['code', 'preview'], tools: ['full']}">
   <textarea>
-<div class="layui-btn-container">
-  <button class="layui-btn" lay-on="e1">事件 1</button>
-  <button class="layui-btn" lay-on="e2">事件 2</button>
-  <button class="layui-btn" lay-active="e3">事件 3</button>
+<div class="lay-btn-container">
+  <button class="lay-btn" lay-on="e1">事件 1</button>
+  <button class="lay-btn" lay-on="e2">事件 2</button>
+  <button class="lay-btn" lay-active="e3">事件 3</button>
 </div>
 
 <!-- import layui -->
 <script>
 layui.use('util', function(){
   var util = layui.util;
+  var layer = layui.layer;
 
   //  2.9+ 版本可省略 attr 参数，默认读取 lay-on
   util.on({
@@ -249,7 +250,7 @@ layui.use('util', function(){
       console.log(othis); // 当前触发事件的元素的 jQuery 对象
 
       // e 为当前事件对象，此处演示阻止事件冒泡（比如委托父元素和子元素共用了同一事件名）
-      layui.stope(e);
+      e.stopPropagation();
 
       // 演示提示
       layer.tips(othis.html(), this);
@@ -261,3 +262,4 @@ layui.use('util', function(){
 </script>
   </textarea>
 </pre>
+

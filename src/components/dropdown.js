@@ -3,14 +3,12 @@
  * 下拉菜单组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { laytpl } from '../core/laytpl.js';
-import { util } from './util.js';
 
-var device = layui.device();
+var device = lay.device();
 var clickOrMousedown = device.mobile ? 'touchstart' : 'mousedown';
 
 // 模块名
@@ -41,7 +39,7 @@ var dropdown = {
 
   // 事件
   on: function (events, callback) {
-    return layui.onevent.call(this, MOD_NAME, events, callback);
+    return lay.onevent.call(this, MOD_NAME, events, callback);
   },
 };
 
@@ -70,21 +68,21 @@ var thisModule = function () {
 };
 
 // 字符常量
-var STR_ELEM = 'layui-dropdown';
-// var STR_HIDE = 'layui-hide';
-var STR_DISABLED = 'layui-disabled';
-// var STR_NONE = 'layui-none';
-var STR_ITEM_UP = 'layui-menu-item-up';
-var STR_ITEM_DOWN = 'layui-menu-item-down';
-var STR_MENU_TITLE = 'layui-menu-body-title';
-var STR_ITEM_GROUP = 'layui-menu-item-group';
-var STR_ITEM_PARENT = 'layui-menu-item-parent';
-var STR_ITEM_DIV = 'layui-menu-item-divider';
-var STR_ITEM_CHECKED = 'layui-menu-item-checked';
-var STR_ITEM_CHECKED2 = 'layui-menu-item-checked2';
-var STR_MENU_PANEL = 'layui-menu-body-panel';
-var STR_MENU_PANEL_L = 'layui-menu-body-panel-left';
-var STR_ELEM_SHADE = 'layui-dropdown-shade';
+var STR_ELEM = 'lay-dropdown';
+// var STR_HIDE = 'lay-hide';
+var STR_DISABLED = 'lay-disabled';
+// var STR_NONE = 'lay-none';
+var STR_ITEM_UP = 'lay-menu-item-up';
+var STR_ITEM_DOWN = 'lay-menu-item-down';
+var STR_MENU_TITLE = 'lay-menu-body-title';
+var STR_ITEM_GROUP = 'lay-menu-item-group';
+var STR_ITEM_PARENT = 'lay-menu-item-parent';
+var STR_ITEM_DIV = 'lay-menu-item-divider';
+var STR_ITEM_CHECKED = 'lay-menu-item-checked';
+var STR_ITEM_CHECKED2 = 'lay-menu-item-checked2';
+var STR_MENU_PANEL = 'lay-menu-body-panel';
+var STR_MENU_PANEL_L = 'lay-menu-body-panel-left';
+var STR_ELEM_SHADE = 'lay-dropdown-shade';
 
 var STR_GROUP_TITLE = '.' + STR_ITEM_GROUP + '>.' + STR_MENU_TITLE;
 
@@ -129,7 +127,7 @@ Class.prototype.init = function (rerender, type) {
   // 若 elem 非唯一
   var elem = $(options.elem);
   if (elem.length > 1) {
-    layui.each(elem, function () {
+    elem.each(function () {
       dropdown.render(
         $.extend({}, options, {
           elem: this,
@@ -193,12 +191,12 @@ Class.prototype.render = function (type) {
 
   // 默认菜单内容
   var getDefaultView = function () {
-    var elemUl = $('<ul class="layui-menu layui-dropdown-menu"></ul>');
+    var elemUl = $('<ul class="lay-menu lay-dropdown-menu"></ul>');
     if (options.data.length > 0) {
       eachItemView(elemUl, options.data);
     } else {
       elemUl.html(
-        '<li class="layui-menu-item-none">' +
+        '<li class="lay-menu-item-none">' +
           i18n.$t('dropdown.noData') +
           '</li>',
       );
@@ -210,7 +208,7 @@ Class.prototype.render = function (type) {
   var eachItemView = function (views, data) {
     // var views = [];
 
-    layui.each(data, function (index, item) {
+    data.forEach(function (item) {
       // 是否存在子级
       var isChild =
         item[customName.children] && item[customName.children].length > 0;
@@ -225,7 +223,7 @@ Class.prototype.render = function (type) {
               : laytpl(templet).render(item);
         }
         return title;
-      })(util.escape(item[customName.title]));
+      })(lay.escape(item[customName.title]));
 
       // 初始类型
       var type = (function () {
@@ -259,14 +257,14 @@ Class.prototype.render = function (type) {
             (function () {
               var className = {
                 group:
-                  'layui-menu-item-group' +
+                  'lay-menu-item-group' +
                   (options.isAllowSpread
                     ? isSpreadItem
-                      ? ' layui-menu-item-down'
-                      : ' layui-menu-item-up'
+                      ? ' lay-menu-item-down'
+                      : ' lay-menu-item-up'
                     : ''),
                 parent: STR_ITEM_PARENT,
-                '-': 'layui-menu-item-divider',
+                '-': 'lay-menu-item-divider',
               };
               if (isChild || type) {
                 return ' class="' + className[type] + '"';
@@ -297,10 +295,10 @@ Class.prototype.render = function (type) {
                 viewText +
                 (function () {
                   if (type === 'parent') {
-                    return '<i class="layui-icon layui-icon-right"></i>';
+                    return '<i class="lay-icon lay-icon-right"></i>';
                   } else if (type === 'group' && options.isAllowSpread) {
                     return (
-                      '<i class="layui-icon layui-icon-' +
+                      '<i class="lay-icon lay-icon-' +
                       (isSpreadItem ? 'up' : 'down') +
                       '"></i>'
                     );
@@ -321,9 +319,7 @@ Class.prototype.render = function (type) {
 
       //子级区
       if (isChild) {
-        var elemPanel = $(
-          '<div class="layui-panel layui-menu-body-panel"></div>',
-        );
+        var elemPanel = $('<div class="lay-panel lay-menu-body-panel"></div>');
         var elemUl = $('<ul></ul>');
 
         if (type === 'parent') {
@@ -341,7 +337,7 @@ Class.prototype.render = function (type) {
 
   // 主模板
   var TPL_MAIN = [
-    '<div class="layui-dropdown layui-border-box layui-panel layui-anim layui-anim-downbit" ' +
+    '<div class="lay-dropdown lay-border-box lay-panel lay-anim lay-anim-downbit" ' +
       MOD_ID +
       '="' +
       options.id +
@@ -408,12 +404,12 @@ Class.prototype.render = function (type) {
   that.position(); // 定位坐标
 
   // 阻止全局事件
-  mainElem.find('.layui-menu').on(clickOrMousedown, function (e) {
-    layui.stope(e);
+  mainElem.find('.lay-menu').on(clickOrMousedown, function (e) {
+    e.stopPropagation();
   });
 
   // 触发菜单列表事件
-  mainElem.find('.layui-menu li').on('click', function (e) {
+  mainElem.find('.lay-menu li').on('click', function (e) {
     var othis = $(this);
     var data = othis.data('item') || {};
     var isChild =
@@ -430,7 +426,7 @@ Class.prototype.render = function (type) {
           : null;
 
       ret === false || isChild || that.remove();
-      layui.stope(e);
+      e.stopPropagation();
     }
   });
 
@@ -685,10 +681,10 @@ thisModule.spread = function (othis, isAccordion) {
   var _DOC = $(document);
 
   // 基础菜单的静态元素事件
-  var ELEM_LI = '.layui-menu:not(.layui-dropdown-menu) li';
+  var ELEM_LI = '.lay-menu:not(.lay-dropdown-menu) li';
   _DOC.on('click', ELEM_LI, function () {
     var othis = $(this);
-    var parent = othis.parents('.layui-menu').eq(0);
+    var parent = othis.parents('.lay-menu').eq(0);
     var isChild =
       othis.hasClass(STR_ITEM_GROUP) || othis.hasClass(STR_ITEM_PARENT);
     var filter = parent.attr('lay-filter') || parent.attr('id');
@@ -706,10 +702,14 @@ thisModule.spread = function (othis, isAccordion) {
       othis.parents('.' + STR_ITEM_PARENT).addClass(STR_ITEM_CHECKED2); // 添加父级菜单选中样式
 
       options.title =
-        options.title || $.trim(othis.children('.' + STR_MENU_TITLE).text());
+        options.title ||
+        othis
+          .children('.' + STR_MENU_TITLE)
+          .text()
+          .trim();
 
       // 触发事件
-      layui.event.call(this, MOD_NAME, 'click(' + filter + ')', options);
+      lay.event.call(this, MOD_NAME, 'click(' + filter + ')', options);
     }
   });
 
@@ -719,7 +719,7 @@ thisModule.spread = function (othis, isAccordion) {
     var elemGroup = othis.parents('.' + STR_ITEM_GROUP + ':eq(0)');
     var options = lay.options(elemGroup[0]);
     var isAccordion =
-      typeof othis.parents('.layui-menu').eq(0).attr('lay-accordion') ===
+      typeof othis.parents('.lay-menu').eq(0).attr('lay-accordion') ===
       'string';
 
     if ('isAllowSpread' in options ? options.isAllowSpread : true) {
@@ -728,7 +728,7 @@ thisModule.spread = function (othis, isAccordion) {
   });
 
   // 判断子级菜单是否超出屏幕
-  var ELEM_LI_PAR = '.layui-menu .' + STR_ITEM_PARENT;
+  var ELEM_LI_PAR = '.lay-menu .' + STR_ITEM_PARENT;
   _DOC
     .on('mouseenter', ELEM_LI_PAR, function () {
       var othis = $(this);
@@ -799,7 +799,7 @@ dropdown.reloadData = function () {
   );
 
   // 过滤与数据无关的参数
-  layui.each(args[1], function (key) {
+  Object.keys(args[1] || {}).forEach(function (key) {
     if (!dataParams.test(key)) {
       delete args[1][key];
     }

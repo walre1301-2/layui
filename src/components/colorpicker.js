@@ -3,13 +3,12 @@
  * 颜色选择组件
  */
 
-import { layui } from '../core/layui.js';
 import { lay } from '../core/lay.js';
 import { i18n } from '../core/i18n.js';
-import $ from 'jquery';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
-var device = layui.device();
+var device = lay.device();
 var clickOrMousedown = device.mobile ? 'click' : 'mousedown';
 
 // 创建组件
@@ -51,19 +50,19 @@ var component = componentBuilder({
   },
 
   CONST: {
-    ELEM: 'layui-colorpicker',
-    ELEM_MAIN: '.layui-colorpicker-main',
-    ICON_PICKER_DOWN: 'layui-icon-down',
-    ICON_PICKER_CLOSE: 'layui-icon-close',
-    PICKER_TRIG_SPAN: 'layui-colorpicker-trigger-span',
-    PICKER_TRIG_I: 'layui-colorpicker-trigger-i',
-    PICKER_SIDE: 'layui-colorpicker-side',
-    PICKER_SIDE_SLIDER: 'layui-colorpicker-side-slider',
-    PICKER_BASIS: 'layui-colorpicker-basis',
-    PICKER_ALPHA_BG: 'layui-colorpicker-alpha-bgcolor',
-    PICKER_ALPHA_SLIDER: 'layui-colorpicker-alpha-slider',
-    PICKER_BASIS_CUR: 'layui-colorpicker-basis-cursor',
-    PICKER_INPUT: 'layui-colorpicker-main-input',
+    ELEM: 'lay-colorpicker',
+    ELEM_MAIN: '.lay-colorpicker-main',
+    ICON_PICKER_DOWN: 'lay-icon-down',
+    ICON_PICKER_CLOSE: 'lay-icon-close',
+    PICKER_TRIG_SPAN: 'lay-colorpicker-trigger-span',
+    PICKER_TRIG_I: 'lay-colorpicker-trigger-i',
+    PICKER_SIDE: 'lay-colorpicker-side',
+    PICKER_SIDE_SLIDER: 'lay-colorpicker-side-slider',
+    PICKER_BASIS: 'lay-colorpicker-basis',
+    PICKER_ALPHA_BG: 'lay-colorpicker-alpha-bgcolor',
+    PICKER_ALPHA_SLIDER: 'lay-colorpicker-alpha-slider',
+    PICKER_BASIS_CUR: 'lay-colorpicker-basis-cursor',
+    PICKER_INPUT: 'lay-colorpicker-main-input',
   },
 
   // 初始化之前
@@ -89,13 +88,13 @@ var component = componentBuilder({
     // 颜色选择框对象
     var elemColorBox = $(
       [
-        '<div class="layui-unselect layui-colorpicker">',
+        '<div class="lay-unselect lay-colorpicker">',
         '<span ' +
           (options.format == 'rgb' && options.alpha
-            ? 'class="layui-colorpicker-trigger-bgcolor"'
+            ? 'class="lay-colorpicker-trigger-bgcolor"'
             : '') +
           '>',
-        '<span class="layui-colorpicker-trigger-span" ',
+        '<span class="lay-colorpicker-trigger-span" ',
         'lay-type="' +
           (options.format == 'rgb' ? (options.alpha ? 'rgba' : 'torgb') : '') +
           '" ',
@@ -118,7 +117,7 @@ var component = componentBuilder({
             return bgstr;
           })() +
           '">',
-        '<i class="layui-icon layui-colorpicker-trigger-i ' +
+        '<i class="lay-icon lay-colorpicker-trigger-i ' +
           (options.color ? CONST.ICON_PICKER_DOWN : CONST.ICON_PICKER_CLOSE) +
           '"></i>',
         '</span>',
@@ -129,10 +128,10 @@ var component = componentBuilder({
 
     // 初始化颜色选择框尺寸
     var elem = options.elem;
-    options.size && elemColorBox.addClass('layui-colorpicker-' + options.size);
+    options.size && elemColorBox.addClass('lay-colorpicker-' + options.size);
 
     // 插入颜色选择框
-    elem.addClass('layui-inline').html((that.elemColorBox = elemColorBox));
+    elem.addClass('lay-inline').html((that.elemColorBox = elemColorBox));
 
     // 获取背景色值
     that.color = that.elemColorBox.find(
@@ -270,40 +269,40 @@ Class.prototype.renderPicker = function () {
   // 颜色选择器对象
   var elemPicker = (that.elemPicker = $(
     [
-      '<div id="layui-colorpicker' +
+      '<div id="lay-colorpicker' +
         that.index +
         '" data-index="' +
         that.index +
-        '" class="layui-anim layui-anim-downbit layui-colorpicker-main">',
+        '" class="lay-anim lay-anim-downbit lay-colorpicker-main">',
       //颜色面板
-      '<div class="layui-colorpicker-main-wrapper">',
-      '<div class="layui-colorpicker-basis">',
-      '<div class="layui-colorpicker-basis-white"></div>',
-      '<div class="layui-colorpicker-basis-black"></div>',
-      '<div class="layui-colorpicker-basis-cursor"></div>',
+      '<div class="lay-colorpicker-main-wrapper">',
+      '<div class="lay-colorpicker-basis">',
+      '<div class="lay-colorpicker-basis-white"></div>',
+      '<div class="lay-colorpicker-basis-black"></div>',
+      '<div class="lay-colorpicker-basis-cursor"></div>',
       '</div>',
-      '<div class="layui-colorpicker-side">',
-      '<div class="layui-colorpicker-side-slider"></div>',
+      '<div class="lay-colorpicker-side">',
+      '<div class="lay-colorpicker-side-slider"></div>',
       '</div>',
       '</div>',
       //透明度条块
-      '<div class="layui-colorpicker-main-alpha ' +
+      '<div class="lay-colorpicker-main-alpha ' +
         (options.alpha ? CONST.CLASS_SHOW : '') +
         '">',
-      '<div class="layui-colorpicker-alpha-bgcolor">',
-      '<div class="layui-colorpicker-alpha-slider"></div>',
+      '<div class="lay-colorpicker-alpha-bgcolor">',
+      '<div class="lay-colorpicker-alpha-slider"></div>',
       '</div>',
       '</div>',
       //预设颜色列表
       (function () {
         if (options.predefine) {
-          var list = ['<div class="layui-colorpicker-main-pre">'];
-          layui.each(options.colors, function (i, v) {
+          var list = ['<div class="lay-colorpicker-main-pre">'];
+          options.colors.forEach(function (v) {
             list.push(
               [
-                '<div class="layui-colorpicker-pre' +
+                '<div class="lay-colorpicker-pre' +
                   ((v.match(/[0-9]{1,3}/g) || []).length > 3
-                    ? ' layui-colorpicker-pre-isalpha'
+                    ? ' lay-colorpicker-pre-isalpha'
                     : '') +
                   '">',
                 '<div style="background:' + v + '"></div>',
@@ -318,15 +317,15 @@ Class.prototype.renderPicker = function () {
         }
       })(),
       //底部表单元素区域
-      '<div class="layui-colorpicker-main-input">',
-      '<div class="layui-inline">',
-      '<input type="text" class="layui-input">',
+      '<div class="lay-colorpicker-main-input">',
+      '<div class="lay-inline">',
+      '<input type="text" class="lay-input">',
       '</div>',
-      '<div class="layui-btn-group">',
-      '<button style="border-radius: 0" class="layui-btn layui-btn-primary layui-btn-sm" colorpicker-events="clear">' +
+      '<div class="lay-btn-group">',
+      '<button style="border-radius: 0" class="lay-btn lay-btn-primary lay-btn-sm" colorpicker-events="clear">' +
         i18n.$t('colorpicker.clear') +
         '</button>',
-      '<button style="border-radius: 0; border-left: 0" class="layui-btn layui-btn-primary layui-btn-sm" colorpicker-events="confirm">' +
+      '<button style="border-radius: 0; border-left: 0" class="lay-btn lay-btn-primary lay-btn-sm" colorpicker-events="confirm">' +
         i18n.$t('colorpicker.confirm') +
         '</button>',
       '</div',
@@ -349,7 +348,7 @@ Class.prototype.renderPicker = function () {
 Class.prototype.removePicker = function (index) {
   var that = this;
   var options = that.config;
-  var elem = $('#layui-colorpicker' + (index || that.index));
+  var elem = $('#lay-colorpicker' + (index || that.index));
 
   that.stopClickOutsideEvent();
   that.stopResizeEvent();
@@ -458,7 +457,7 @@ Class.prototype.side = function () {
     _s = (choose[0].offsetLeft / 260) * 100,
     _a = Math.round((alphaslider[0].offsetLeft / 280) * 100) / 100,
     i = that.elemColorBox.find('.' + CONST.PICKER_TRIG_I),
-    pre = that.elemPicker.find('.layui-colorpicker-pre').children('div'),
+    pre = that.elemPicker.find('.lay-colorpicker-pre').children('div'),
     change = function (x, y, z, a) {
       that.select(x, y, z);
       var rgb = HSBToRGB({ h: x, s: y, b: z });
@@ -502,18 +501,17 @@ Class.prototype.side = function () {
       //回调更改的颜色
       options.change &&
         options.change(
-          $.trim(
-            that.elemPicker
-              .find('.' + CONST.PICKER_INPUT)
-              .find('input')
-              .val(),
-          ),
+          that.elemPicker
+            .find('.' + CONST.PICKER_INPUT)
+            .find('input')
+            .val()
+            .trim(),
         );
     },
     //拖拽元素
     elemMove = $(
       [
-        '<div class="layui-auxiliar-moving" id="LAY-colorpicker-moving"></div>',
+        '<div class="lay-auxiliar-moving" id="LAY-colorpicker-moving"></div>',
       ].join(''),
     ),
     createMoveElem = function (call) {
@@ -547,7 +545,7 @@ Class.prototype.side = function () {
       change(h, _s, _b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -585,7 +583,7 @@ Class.prototype.side = function () {
       change(_h, s, b, _a);
       e.preventDefault();
     };
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -602,7 +600,7 @@ Class.prototype.side = function () {
     _b = b;
     _s = s;
     change(_h, s, b, _a);
-    layui.stope(e);
+    e.stopPropagation();
     e.preventDefault();
     needTrigger && choose.trigger('mousedown', e);
   });
@@ -622,7 +620,7 @@ Class.prototype.side = function () {
       e.preventDefault();
     };
 
-    needStopPropagation && layui.stope(e);
+    needStopPropagation && e.stopPropagation();
     createMoveElem(move);
     e.preventDefault();
   });
@@ -641,7 +639,7 @@ Class.prototype.side = function () {
   pre.each(function () {
     $(this).on('click', function () {
       $(this)
-        .parent('.layui-colorpicker-pre')
+        .parent('.lay-colorpicker-pre')
         .addClass('selected')
         .siblings()
         .removeClass('selected');
@@ -661,30 +659,26 @@ Class.prototype.side = function () {
 
   if (!lay.touchEventsSupported()) return;
   // 触摸事件模拟
-  layui.each(
-    [
-      { elem: side, eventType: 'mousedown' },
-      { elem: alphacolor, eventType: 'mousedown' },
-      { elem: basis, eventType: 'mousedown' },
-    ],
-    function (i, obj) {
-      lay.touchSwipe(obj.elem, {
-        onTouchStart: function () {
-          needTrigger = false;
-          needStopPropagation = false;
-        },
-        onTouchMove: function (e) {
-          touchHandler(e, obj.eventType);
-        },
-        onTouchEnd: function () {
-          elemMove.remove();
-          needTrigger = true;
-          needStopPropagation = true;
-        },
-      });
-    },
-  );
-
+  [
+    { elem: side, eventType: 'mousedown' },
+    { elem: alphacolor, eventType: 'mousedown' },
+    { elem: basis, eventType: 'mousedown' },
+  ].forEach(function (obj) {
+    lay.touchSwipe(obj.elem, {
+      onTouchStart: function () {
+        needTrigger = false;
+        needStopPropagation = false;
+      },
+      onTouchMove: function (e) {
+        touchHandler(e, obj.eventType);
+      },
+      onTouchEnd: function () {
+        elemMove.remove();
+        needTrigger = true;
+        needStopPropagation = true;
+      },
+    });
+  });
   function touchHandler(event, eventType) {
     var pointer = event.touches[0];
     var simulatedEvent = document.createEvent('MouseEvent');
@@ -761,7 +755,7 @@ Class.prototype.pickerEvents = function () {
 
     //确认
     confirm: function (othis, change) {
-      var value = $.trim(elemPickerInput.val()),
+      var value = elemPickerInput.val().trim(),
         colorValue,
         hsb;
 

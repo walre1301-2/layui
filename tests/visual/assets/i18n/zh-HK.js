@@ -80,7 +80,7 @@ export default {
     cancel: '取消',
     defaultTitle: '資訊',
     prompt: {
-      InputLengthPrompt: '最多輸入 {length} 個字符',
+      inputLengthPrompt: '最多輸入 {length} 個字符',
     },
     photos: {
       noData: '沒有圖片',
@@ -124,7 +124,6 @@ export default {
       export: {
         title: '匯出',
         noDataPrompt: '當前表格無資料',
-        compatPrompt: '匯出功能不支援 IE，請用 Chrome 等高級瀏覽器匯出',
         csvText: '匯出 CSV 檔案',
       },
       print: {
@@ -162,7 +161,7 @@ export default {
     },
     chooseText: '{length} 個檔案',
   },
-  util: {
+  utils: {
     timeAgo: {
       days: '{days} 天前',
       hours: '{hours} 小時前',

@@ -83,7 +83,7 @@ export default {
     cancel: 'Cancel',
     defaultTitle: 'Info',
     prompt: {
-      InputLengthPrompt: 'Maximum {length} characters',
+      inputLengthPrompt: 'Maximum {length} characters',
     },
     photos: {
       noData: 'No Image',
@@ -127,8 +127,6 @@ export default {
       export: {
         title: 'Export',
         noDataPrompt: 'No data in the table',
-        compatPrompt:
-          'Export is not supported in IE. Please use Chrome or another modern browser.',
         csvText: 'Export CSV File',
       },
       print: {
@@ -166,7 +164,7 @@ export default {
     },
     chooseText: '{length} files',
   },
-  util: {
+  utils: {
     timeAgo: {
       days: '{days} days ago',
       hours: '{hours} hours ago',

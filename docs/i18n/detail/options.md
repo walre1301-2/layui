@@ -1,4 +1,4 @@
-<pre class="layui-code" lay-options="{style: 'height: 525px;', layout: ['code'], tools: []}">
+<pre class="lay-code" lay-options="{style: 'height: 525px;', layout: ['code'], tools: []}">
   <textarea>
 // 简体中文语言包（内置）
 var zhCN = {
@@ -110,7 +110,6 @@ var zhCN = {
       export: {
         title: '导出',
         noDataPrompt: '当前表格无数据',
-        compatPrompt: '导出功能不支持 IE，请用 Chrome 等高级浏览器导出',
         csvText : '导出 CSV 文件'
       },
       print: {
@@ -183,3 +182,4 @@ i18n.set({
 });
   </textarea>
 </pre>
+

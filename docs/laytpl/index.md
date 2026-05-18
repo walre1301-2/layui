@@ -9,7 +9,7 @@ toc: true
 
 <h2 id="test" lay-toc="{hot: true}" style="margin-bottom: 0;">在线测试</h2>
 
-对文本框中的*模板*或*数据*进行编辑，下方将呈现对应的*渲染结果*。注：自 <sup>2.11+</sup> 版本开始，你可以设置 `tagStyle: 'modern'` 让模板采用新的标签风格。为了保持向下兼容，默认仍然采用旧版本的标签风格。
+对文本框中的*模板*或*数据*进行编辑，下方将呈现对应的*渲染结果*。
 
 <div>
 {{- d.include("/laytpl/detail/demo.md") }}
@@ -120,9 +120,7 @@ layui.use(function(){
 var templateInst = laytpl(`
   {{ let role = d.role || '全栈开发者'; }}
   {{= d.name }}是一名{{= role }}
-`, {
-  tagStyle: 'modern' // 采用新版本的标签风格
-});
+`);
 var html = templateInst.render({ name: '张三' });
 ```
 !}}
@@ -152,7 +150,7 @@ laytpl 支持在模板中通过添加 `{{- include(id, data) }}` 语句引入子
 
 为了引入的子模板不被转义，因此这里应该使用 `{{- }}`，即对子模板进行原文输出。示例：
 
-<pre class="layui-code" lay-options="{preview: true, layout: ['code', 'preview'], codeStyle: 'max-height: 520px;', tools: ['full']}">
+<pre class="lay-code" lay-options="{preview: true, layout: ['code', 'preview'], codeStyle: 'max-height: 520px;', tools: ['full']}">
   <textarea>
 <script id="ID-demo-tpl-header" type="text/html">
   <div>头部公共模板</div>
@@ -188,9 +186,7 @@ layui.use(function() {
   };
 
   // 创建模板实例
-  var templateInst = laytpl(template, {
-    tagStyle: 'modern' // 采用新版本的标签风格
-  });
+  var templateInst = laytpl(template);
 
   // 渲染并输出结果
   templateInst.render(data, function(html) {
@@ -218,7 +214,6 @@ layui.use(function() {
 laytpl.config({
   open: '<%', // 自定义起始界定符
   close: '%>', // 自定义起始界定符
-  tagStyle: 'modern' // 采用新版本的标签风格
 });
 
 // 创建模板实例
@@ -272,4 +267,5 @@ templateInst.render({ time: 1742745600000 }, function(html) {
 我们在 `2.11` 版本对 laytpl 完成了重要重构，使其能够具备应对更多复杂模板结构的解析能力。同时，为了与业界常用的 JavaScript 模板引擎 ejs 对齐，我们新增了与 ejs 相同的标签规则，这意味着同一套模板可以在 laytpl 和 ejs 中任意切换。
 
 作为 Layui 为数不多的一个纯功能型的模块，laytpl 承载了一些重要组件的功能支撑，如 table, dropdown 等，使得它们也能够自定义动态模板，增强了组件的可定制化。当然，laytpl 也可以作为前端单页面应用及 Express 等 Web 框架的视图引擎。
+
 

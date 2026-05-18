@@ -1,4 +1,4 @@
-<table class="layui-hide" id="ID-table-demo-filter"></table>
+<table class="lay-hide" id="ID-table-demo-filter"></table>
 
 <!-- import layui -->
 <script>
@@ -21,16 +21,16 @@ layui.use(function(){
         {field:'sign', title:'签名'},
         {field:'classify', title:'职业'}
       ];
-      
+
       // 初始化筛选状态
       var local = layui.data('table-filter-test'); // 获取对应的本地记录
-      layui.each(arr, function(index, item){
+      arr.forEach(function(item){
         if(item.field in local){
           item.hide = local[item.field];
         }
       });
       return arr;
-    }() ],  
+    }() ],
     done: function(){
       // 记录筛选状态
       var that = this;
@@ -46,3 +46,4 @@ layui.use(function(){
   });
 });
 </script>
+

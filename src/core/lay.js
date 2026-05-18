@@ -3,45 +3,38 @@
  * 基础模块
  */
 
-import { layui } from './layui.js';
+import { log } from './logger.js';
 
-var document = window.document;
+const { document } = window;
+const lay = Object.create(null);
+const version = '__VERSION__';
+
+const fnToString = Function.prototype.toString;
+const ObjectFunctionString = fnToString.call(Object);
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 /**
- * 元素查找
- * @param {string | HTMLElement | JQuery} selector
+ * 使用入口
+ *
+ * 保留 `layui.use` 作为「开始使用」的语义，用于确保组件实例化的执行时序。
+ * 但当前不再承载模块加载或依赖解析的职责，模块体系已全面迁移至 ES Modules。
+ * 我们希望它依然是一个具有高辨别度的门户、一个具有特殊意蕴的连接。
+ *
+ * @param {Function} callback - DOM 就绪后执行的回调函数
  */
-var lay = function (selector) {
-  return new Class(selector);
-};
-
-// 构造器
-var Class = function (selector) {
-  var that = this;
-  var elem =
-    typeof selector === 'object'
-      ? (function () {
-          // 仅适配简单元素对象
-          return layui.isArray(selector) ? selector : [selector];
-        })()
-      : ((this.selector = selector),
-        document.querySelectorAll(selector || null));
-
-  lay.each(elem, function (index) {
-    that.push(elem[index]);
-  });
-};
-
-var fnToString = Function.prototype.toString;
-var ObjectFunctionString = fnToString.call(Object);
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-/*
-  lay 对象操作
-*/
-
-Class.fn = Class.prototype = [];
-Class.fn.constructor = Class;
+const use = (lay.use = (callback) => {
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        queueMicrotask(callback);
+      },
+      { once: true },
+    );
+  } else {
+    queueMicrotask(callback);
+  }
+});
 
 /**
  * 将一个或多个对象合并到目标对象中
@@ -166,6 +159,142 @@ lay.isPlainObject = function (obj) {
 };
 
 /**
+ * typeof 类型细分 -> string/number/boolean/undefined/null、object/array/function/…
+ * @param {*} operand - 任意值
+ * @returns {string}
+ */
+lay.type = function (operand) {
+  if (operand === null) return String(operand);
+
+  // 细分引用类型
+  return typeof operand === 'object' || typeof operand === 'function'
+    ? (function () {
+        var type =
+          Object.prototype.toString.call(operand).match(/\s(.+)\]$/) || []; // 匹配类型字符
+        var classType = 'Function|Array|Date|RegExp|Object|Error|Symbol'; // 常见类型字符
+
+        type = type[1] || 'Object';
+
+        // 除匹配到的类型外，其他对象均返回 object
+        return new RegExp('\\b(' + classType + ')\\b').test(type)
+          ? type.toLowerCase()
+          : 'object';
+      })()
+    : typeof operand;
+};
+
+/**
+ * 对象是否具备「类数组」结构（此处为兼容 jQuery 对象）
+ * @param {Object} obj - 任意对象
+ * @returns {boolean}
+ */
+lay.isArray = function (obj) {
+  var len;
+  var type = lay.type(obj);
+
+  if (!obj || typeof obj !== 'object' || obj === window) return false;
+
+  len = 'length' in obj && obj.length;
+  return (
+    type === 'array' ||
+    len === 0 ||
+    (typeof len === 'number' && len > 0 && len - 1 in obj) // 兼容 jQuery 对象
+  );
+};
+
+/**
+ * 本地存储
+ * @param {string} table - 表名
+ * @param {Object} settings - 设置项
+ * @param {Storage} storage - 存储对象，localStorage | sessionStorage
+ * @returns {Object}
+ */
+lay.storage = function (table = 'LAY', settings, storage) {
+  storage = storage || localStorage;
+
+  // 如果 settings 为 null，则删除表
+  if (settings === null) {
+    return delete storage[table];
+  }
+
+  settings = typeof settings === 'object' ? settings : { key: settings };
+
+  var data;
+
+  try {
+    data = JSON.parse(storage[table]);
+  } catch {
+    data = {};
+  }
+
+  if ('value' in settings) {
+    data[settings.key] = settings.value;
+  }
+  if (settings.remove) {
+    delete data[settings.key];
+  }
+
+  storage[table] = JSON.stringify(data);
+
+  return settings.key ? data[settings.key] : data;
+};
+
+/**
+ * 本地会话存储
+ * @param {string} table - 表名
+ * @param {Object} settings - 设置项
+ * @returns {Object}
+ */
+lay.sessionStorage = function (table, settings) {
+  return lay.storage(table, settings, sessionStorage);
+};
+
+/**
+ * 设备信息
+ * @param {string} key - 任意 key
+ * @returns {Object}
+ */
+lay.device = function (key) {
+  var agent = navigator.userAgent.toLowerCase();
+
+  // 获取版本号
+  var getVersion = function (label) {
+    var exp = new RegExp(label + '/([^\\s\\_\\-]+)');
+    label = (agent.match(exp) || [])[1];
+    return label || false;
+  };
+
+  // 返回结果集
+  var result = {
+    os: (function () {
+      // 底层操作系统
+      if (/windows/.test(agent)) {
+        return 'windows';
+      } else if (/linux/.test(agent)) {
+        return 'linux';
+      } else if (/iphone|ipod|ipad|ios/.test(agent)) {
+        return 'ios';
+      } else if (/mac/.test(agent)) {
+        return 'mac';
+      }
+    })(),
+    weixin: getVersion('micromessenger'), // 是否微信
+  };
+
+  // 任意的 key
+  if (key && !result[key]) {
+    result[key] = getVersion(key);
+  }
+
+  // 移动设备
+  result.android = /android/.test(agent);
+  result.ios = result.os === 'ios';
+  result.mobile = result.android || result.ios;
+
+  return result;
+};
+
+/**
  * IE 版本
  * @type {string | boolean} - 如果是 IE 返回版本字符串，否则返回 false
  */
@@ -177,16 +306,240 @@ lay.ie = (function () {
 })();
 
 /**
- * 获取 layui 常见方法，以便用于组件单独版
+ * 将数组中的成员对象按照某个 key 的 value 值进行排序
+ * @param {Object[]} arr - 任意数组
+ * @param {string} key - 任意 key
+ * @param {boolean} desc - 是否降序
+ * @param {boolean} notClone - 是否不对 arr 进行克隆
+ * @returns {Object[]}
  */
+lay.sort = function (arr, key, desc, notClone) {
+  var clone = notClone ? arr || [] : JSON.parse(JSON.stringify(arr || []));
 
-lay.layui = layui || {};
-lay.getPath = layui.cache.dir; // 获取当前 JS 所在目录
-lay.stope = layui.stope; // 中止冒泡
-lay.each = function () {
-  // 遍历
-  layui.each.apply(layui, arguments);
-  return this;
+  // 若未传入 key，则直接返回原对象
+  if (lay.type(arr) === 'object' && !key) {
+    return clone;
+  } else if (typeof arr !== 'object') {
+    // 若 arr 非对象
+    return [clone];
+  }
+
+  // 开始排序
+  clone.sort(function (o1, o2) {
+    var v1 = o1[key];
+    var v2 = o2[key];
+
+    /*
+     * 特殊数据
+     * 若比较的成员均非对象
+     */
+
+    // 若比较的成员均为数字
+    if (!isNaN(o1) && !isNaN(o2)) return o1 - o2;
+
+    // 若比较的成员只存在某一个非对象
+    if (!isNaN(o1) && isNaN(o2)) {
+      if (key && typeof o2 === 'object') {
+        v1 = o1;
+      } else {
+        return -1;
+      }
+    } else if (isNaN(o1) && !isNaN(o2)) {
+      if (key && typeof o1 === 'object') {
+        v2 = o2;
+      } else {
+        return 1;
+      }
+    }
+
+    /*
+     * 正常数据
+     * 即成员均为对象，也传入了对比依据： key
+     * 若 value 为数字，按「大小」排序；若 value 非数字，则按「字典序」排序
+     */
+
+    // value 是否为数字
+    var isNum = [!isNaN(v1), !isNaN(v2)];
+
+    // 若为数字比较
+    if (isNum[0] && isNum[1]) {
+      if (v1 && !v2 && v2 !== 0) {
+        // 数字 vs 空
+        return 1;
+      } else if (!v1 && v1 !== 0 && v2) {
+        // 空 vs 数字
+        return -1;
+      } else {
+        // 数字 vs 数字
+        return v1 - v2;
+      }
+    }
+
+    /**
+     * 字典序排序
+     */
+
+    // 若为非数字比较
+    if (!isNum[0] && !isNum[1]) {
+      // 字典序比较
+      if (v1 > v2) {
+        return 1;
+      } else if (v1 < v2) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+
+    // 若为混合比较
+    if (isNum[0] || !isNum[1]) {
+      // 数字 vs 非数字
+      return -1;
+    } else if (!isNum[0] || isNum[1]) {
+      // 非数字 vs 数字
+      return 1;
+    }
+  });
+
+  desc && clone.reverse(); // 倒序
+  return clone;
+};
+
+// 移除事件的特殊标识
+var EV_REMOVE = 'LAY-EVENT-REMOVE';
+
+// 事件缓存集
+lay.events = {};
+
+/**
+ * 自定义模块事件
+ * @param {string} modName - 模块名
+ * @param {string} events - 事件名
+ * @param {Function} callback - 回调
+ * @returns {Object}
+ */
+lay.onevent = function (modName, events, callback) {
+  if (typeof modName !== 'string' || typeof callback !== 'function') {
+    return this;
+  }
+  return lay.event(modName, events, null, callback);
+};
+
+/**
+ * 执行自定义模块事件
+ * @param {string} modName - 模块名
+ * @param {string} events - 事件名
+ * @param {Object} params - 参数
+ * @param {Function} fn - 回调
+ */
+lay.event = function (modName, events, params, fn) {
+  var result = null;
+  var filter = (events || '').match(/\((.*)\)$/) || []; // 提取事件过滤器字符结构，如：select(xxx)
+  var eventName = (modName + '.' + events).replace(filter[0], ''); // 获取事件名称，如：form.select
+  var filterName = filter[1] || ''; // 获取过滤器名称, 如：xxx
+  var callback = (item) => {
+    var res = item && item.call(this, params);
+    res === false && result === null && (result = false);
+  };
+
+  // 如果参数传入特定字符，则执行移除事件
+  if (params === EV_REMOVE) {
+    delete (lay.events[eventName] || {})[filterName];
+    return lay;
+  }
+
+  // 添加事件
+  if (fn) {
+    lay.events[eventName] = lay.events[eventName] || {};
+
+    if (filterName) {
+      // 带 filter 不支持重复事件
+      lay.events[eventName][filterName] = [fn];
+    } else {
+      // 不带 filter 处理的是所有的同类事件，应该支持重复事件
+      lay.events[eventName][filterName] =
+        lay.events[eventName][filterName] || [];
+      lay.events[eventName][filterName].push(fn);
+    }
+    return this;
+  }
+
+  // 执行事件回调
+  const eventHandlers = lay.events[eventName];
+  for (const key in eventHandlers) {
+    const item = eventHandlers[key];
+
+    // 执行当前模块的全部事件
+    if (filterName === '{*}') {
+      item.forEach(callback);
+      continue;
+    }
+
+    // 执行指定事件
+    key === '' && item.forEach(callback);
+    filterName && key === filterName && item.forEach(callback);
+  }
+
+  return result;
+};
+
+/**
+ * 新增模块事件
+ * @param {string} events - 事件名
+ * @param {string} modName - 模块名
+ * @param {Function} callback - 回调
+ * @returns {Object}
+ */
+lay.on = function (events, modName, callback) {
+  return lay.onevent(modName, events, callback);
+};
+
+/**
+ * 移除模块事件
+ * @param {string} events - 事件名
+ * @param {string} modName - 模块名
+ * @returns {Object}
+ */
+lay.off = function (events, modName) {
+  return lay.event(modName, events, EV_REMOVE);
+};
+
+/**
+ * 防抖
+ * @param {Function} func - 回调
+ * @param {number} wait - 延时执行的毫秒数
+ * @returns {Function}
+ */
+lay.debounce = function (func, wait) {
+  var timeout;
+  return function () {
+    var context = this;
+    var args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(function () {
+      func.apply(context, args);
+    }, wait);
+  };
+};
+
+/**
+ * 节流
+ * @param {Function} func - 回调
+ * @param {number} wait - 不重复执行的毫秒数
+ */
+lay.throttle = function (func, wait) {
+  var cooldown = false;
+  return function () {
+    var context = this;
+    var args = arguments;
+    if (!cooldown) {
+      func.apply(context, args);
+      cooldown = true;
+      setTimeout(function () {
+        cooldown = false;
+      }, wait);
+    }
+  };
 };
 
 /**
@@ -213,6 +566,22 @@ lay.digit = function (num, length) {
 };
 
 /**
+ * 获取单个 DOM 元素
+ * @param {string | HTMLElement | JQuery} elem - 目标元素或选择器
+ * @returns {HTMLElement | null}
+ */
+var getElement = function (elem) {
+  if (!elem) return null;
+  if (typeof elem === 'string') {
+    return document.querySelector(elem);
+  }
+  if (elem.jquery || typeof elem.length === 'number') {
+    return elem[0] || null;
+  }
+  return elem;
+};
+
+/**
  * 创建元素
  * @param {string} elemName - 元素的标签名
  * @param {Object.<string, string>} [attr] - 添加到元素上的属性
@@ -224,9 +593,11 @@ lay.digit = function (num, length) {
  */
 lay.elem = function (elemName, attr) {
   var elem = document.createElement(elemName);
-  lay.each(attr || {}, function (key, value) {
+
+  for (const [key, value] of Object.entries(attr || {})) {
     elem.setAttribute(key, value);
-  });
+  }
+
   return elem;
 };
 
@@ -258,6 +629,17 @@ lay.autoIncrementer = function (key, opts = {}) {
 };
 
 /**
+ * 获取节点的 style 属性值
+ * @param {HTMLElement} node - 节点
+ * @param {string} name - 属性名
+ * @returns 属性值
+ */
+lay.getStyle = function (node, name) {
+  var style = window.getComputedStyle(node, null);
+  return style.getPropertyValue(name);
+};
+
+/**
  * 获取 style rules
  * @param {HTMLStyleElement} style - HTMLStyle 元素
  * @param {(ruleItem: CSSStyleRule, index: number) => boolean} [callback] - 用来返回 style 元素中的每个 `style rule` 的函数，返回 true 终止遍历
@@ -285,13 +667,15 @@ lay.autoIncrementer = function (key, opts = {}) {
 lay.getStyleRules = function (style, callback) {
   if (!style) return;
 
-  var sheet = style.sheet || style.styleSheet || {};
-  var rules = sheet.cssRules || sheet.rules;
+  var sheet = style.sheet || {};
+  var rules = sheet.cssRules || [];
 
   if (typeof callback === 'function') {
-    layui.each(rules, function (i, item) {
-      if (callback(item, i)) return true;
-    });
+    for (const [index, item] of Array.from(rules).entries()) {
+      if (callback(item, index)) {
+        break;
+      }
+    }
   }
 
   return rules;
@@ -327,27 +711,25 @@ lay.style = function (options) {
   if (!styleText) return;
 
   // 添加样式
-  if ('styleSheet' in style) {
-    style.setAttribute('type', 'text/css');
-    style.styleSheet.cssText = styleText;
-  } else {
-    style.innerHTML = styleText;
-  }
+  style.innerHTML = styleText;
 
   // ID
   style.id =
     'LAY-STYLE-' +
     (options.id ||
       (function (index) {
-        lay.style.index++;
+        lay.style.index = ++index;
         return 'DF-' + index;
       })(lay.style.index || 0));
 
   // 是否向目标容器中追加 style 元素
   if (target) {
-    var styleElem = lay(target).find('#' + style.id);
-    styleElem[0] && styleElem.remove();
-    lay(target).append(style);
+    var targetElem = getElement(target);
+    if (!targetElem) return style;
+
+    var styleElem = targetElem.querySelector('#' + style.id);
+    styleElem?.remove();
+    targetElem.appendChild(style);
   }
 
   return style;
@@ -390,7 +772,7 @@ lay.position = function (target, elem, opts) {
   opts = opts || {};
 
   // 如果绑定的是 document 或 body 元素，则直接获取鼠标坐标
-  if (target === document || target === lay('body')[0]) {
+  if (target === document || target === document.body) {
     opts.clickType = 'right';
   }
 
@@ -516,9 +898,9 @@ lay.options = function (elem, opts) {
 
   if (elem === document) return {};
 
-  var othis = lay(elem);
   var attrName = opts.attr || 'lay-options';
-  var attrValue = othis.attr(attrName);
+  var targetElem = getElement(elem);
+  var attrValue = targetElem ? targetElem.getAttribute(attrName) : null;
 
   try {
     /**
@@ -527,15 +909,11 @@ lay.options = function (elem, opts) {
      */
     return new Function('return ' + (attrValue || '{}'))();
   } catch (ev) {
-    layui
-      .hint()
-      .error(
-        opts.errorText ||
-          [attrName + '="' + attrValue + '"', '\n parseerror: ' + ev].join(
-            '\n',
-          ),
-        'error',
-      );
+    log(
+      opts.errorText ||
+        [attrName + '="' + attrValue + '"', '\n parseerror: ' + ev].join('\n'),
+      'error',
+    );
     return {};
   }
 };
@@ -550,13 +928,16 @@ lay.options = function (elem, opts) {
  * ```
  */
 lay.isTopElem = function (elem) {
-  var topElems = [document, lay('body')[0]],
-    matched = false;
-  lay.each(topElems, function (index, item) {
+  const topElems = [document, document.body];
+  let matched = false;
+
+  for (const item of topElems) {
     if (item === elem) {
-      return (matched = true);
+      matched = true;
+      break;
     }
-  });
+  }
+
   return matched;
 };
 
@@ -662,7 +1043,7 @@ lay.touchEventsSupported = function () {
  */
 lay.touchSwipe = function (elem, opts) {
   var options = opts;
-  var targetElem = lay(elem)[0];
+  var targetElem = getElement(elem);
   var preventDefault =
     'preventDefault' in options ? options.preventDefault : true;
 
@@ -743,63 +1124,14 @@ lay.touchSwipe = function (elem, opts) {
 };
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | AddEventListenerOptions) => any}*/
-lay.addEvent = (function () {
-  if (document.addEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.addEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var listener = function (e) {
-        e.target = e.srcElement;
-        fn.call(elem, e);
-      };
-      listener._rawFn = fn;
-      if (!elem[eventsCacheName]) {
-        elem[eventsCacheName] = [];
-      }
-      var include = false;
-      lay.each(elem[eventsCacheName], function (_, listener) {
-        if (listener._rawFn === fn) {
-          include = true;
-          return true;
-        }
-      });
-      if (!include) {
-        elem[eventsCacheName].push(listener);
-        elem.attachEvent('on' + eventName, listener);
-      }
-    };
-  }
-})();
+lay.addEvent = function (elem, eventName, fn, options) {
+  elem.addEventListener(eventName, fn, options);
+};
 
 /** @type {(elem: Element|Document|Window,eventName: string,fn:EventListenerOrEventListenerObject,options: boolean | EventListenerOptions) => any}*/
-lay.removeEvent = (function () {
-  if (document.removeEventListener) {
-    return function (elem, eventName, fn, options) {
-      elem.removeEventListener(eventName, fn, options);
-    };
-  } else {
-    return function (elem, eventName, fn) {
-      var prefix = '_lay_on_';
-      var eventsCacheName = prefix + eventName;
-      var events = elem[eventsCacheName];
-      if (layui.isArray(events)) {
-        var newEvents = [];
-        lay.each(events, function (_, listener) {
-          if (listener._rawFn === fn) {
-            elem.detachEvent('on' + eventName, listener);
-          } else {
-            newEvents.push(listener);
-          }
-        });
-        elem[eventsCacheName] = newEvents;
-      }
-    };
-  }
-})();
+lay.removeEvent = function (elem, eventName, fn, options) {
+  elem.removeEventListener(eventName, fn, options);
+};
 
 /**
  * 绑定指定元素外部的点击事件
@@ -824,7 +1156,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   var listener = function (event) {
     var el = target;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     var eventPath = getEventPath(event);
 
     if (!el || el === eventTarget || eventPath.indexOf(el) !== -1) {
@@ -838,13 +1170,13 @@ lay.onClickOutside = function (target, handler, options) {
   };
 
   function shouldIgnore(event, eventPath) {
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
     for (var i = 0; i < ignore.length; i++) {
       var target = ignore[i];
       if (typeof target === 'string') {
         var targetElements = document.querySelectorAll(target);
         for (var j = 0; j < targetElements.length; j++) {
-          var targetEl = targetElements[i];
+          var targetEl = targetElements[j];
           if (targetEl === eventTarget || eventPath.indexOf(targetEl) !== -1) {
             return true;
           }
@@ -862,7 +1194,7 @@ lay.onClickOutside = function (target, handler, options) {
 
   function getEventPath(event) {
     var path = (event.composedPath && event.composedPath()) || event.path;
-    var eventTarget = event.target || event.srcElement;
+    var eventTarget = event.target;
 
     if (path !== null && path !== undefined) {
       return path;
@@ -881,14 +1213,10 @@ lay.onClickOutside = function (target, handler, options) {
   }
 
   function bindEventListener(elem, eventName, handler, opts) {
-    elem.addEventListener
-      ? elem.addEventListener(eventName, handler, opts)
-      : elem.attachEvent('on' + eventName, handler);
+    elem.addEventListener(eventName, handler, opts);
 
     return function () {
-      elem.removeEventListener
-        ? elem.removeEventListener(eventName, handler, opts)
-        : elem.detachEvent('on' + eventName, handler);
+      elem.removeEventListener(eventName, handler, opts);
     };
   }
 
@@ -968,6 +1296,38 @@ lay.unescape = function (html) {
     .replace(/&gt;/g, '>')
     .replace(/&lt;/g, '<')
     .replace(/&amp;/g, '&');
+};
+
+/**
+ * 将字符串编码为 base64
+ * 在 btoa 的基础上，增加对 Unicode、编码模式的支持
+ * @param {string} str - 待编码的二进制字符串
+ * @param {'url'} [mode] - 编码模式，设为 `url` 时表示输出为 base64url 安全编码
+ * @returns {string} 编码后的字符串
+ * @see
+ * - https://developer.mozilla.org/docs/Web/API/Window/btoa
+ * - https://datatracker.ietf.org/doc/html/rfc4648#section-5
+ */
+lay.btoa = (str, mode) => {
+  const bytes = new TextEncoder().encode(str);
+  const chunkSize = 1024 * 32; // 用于对大字符串进行分块处理
+  let binary = '';
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  let encodedStr = btoa(binary);
+
+  // 是否编码为 base64url
+  if (mode === 'url') {
+    return encodedStr
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  return encodedStr;
 };
 
 /**
@@ -1172,200 +1532,4 @@ lay.flatToTree = function (data, options) {
   }, []);
 };
 
-/*
- * lay 元素操作
- */
-
-// 追加字符
-Class.addStr = function (str, new_str) {
-  str = str.replace(/\s+/, ' ');
-  new_str = new_str.replace(/\s+/, ' ').split(' ');
-  lay.each(new_str, function (ii, item) {
-    if (!new RegExp('\\b' + item + '\\b').test(str)) {
-      str = str + ' ' + item;
-    }
-  });
-  return str.replace(/^\s|\s$/, '');
-};
-
-// 移除值
-Class.removeStr = function (str, new_str) {
-  str = str.replace(/\s+/, ' ');
-  new_str = new_str.replace(/\s+/, ' ').split(' ');
-  lay.each(new_str, function (ii, item) {
-    var exp = new RegExp('\\b' + item + '\\b');
-    if (exp.test(str)) {
-      str = str.replace(exp, '');
-    }
-  });
-  return str.replace(/\s+/, ' ').replace(/^\s|\s$/, '');
-};
-
-// 查找子元素
-Class.fn.find = function (selector) {
-  // var that = this;
-  var elem = [];
-  var isObject = typeof selector === 'object';
-
-  this.each(function (i, item) {
-    var children =
-      isObject && item.contains(selector)
-        ? selector
-        : item.querySelectorAll(selector || null);
-
-    lay.each(children, function (index, child) {
-      elem.push(child);
-    });
-  });
-
-  return lay(elem);
-};
-
-// 元素遍历
-Class.fn.each = function (fn) {
-  return lay.each.call(this, this, fn);
-};
-
-// 添加 className
-Class.fn.addClass = function (className, type) {
-  return this.each(function (index, item) {
-    item.className = Class[type ? 'removeStr' : 'addStr'](
-      item.className,
-      className,
-    );
-  });
-};
-
-// 移除 className
-Class.fn.removeClass = function (className) {
-  return this.addClass(className, true);
-};
-
-// 是否包含 css 类
-Class.fn.hasClass = function (className) {
-  var has = false;
-  this.each(function (index, item) {
-    if (new RegExp('\\b' + className + '\\b').test(item.className)) {
-      has = true;
-    }
-  });
-  return has;
-};
-
-// 添加或获取 css style
-Class.fn.css = function (key, value) {
-  var that = this;
-  var parseValue = function (v) {
-    return isNaN(v) ? v : v + 'px';
-  };
-  return typeof key === 'string' && value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].style[key];
-      })()
-    : that.each(function (index, item) {
-        typeof key === 'object'
-          ? lay.each(key, function (thisKey, thisValue) {
-              item.style[thisKey] = parseValue(thisValue);
-            })
-          : (item.style[key] = parseValue(value));
-      });
-};
-
-// 添加或获取宽度
-Class.fn.width = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].offsetWidth; // 此处还需做兼容
-      })()
-    : that.each(function () {
-        that.css('width', value);
-      });
-};
-
-// 添加或获取高度
-Class.fn.height = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].offsetHeight; // 此处还需做兼容
-      })()
-    : that.each(function () {
-        that.css('height', value);
-      });
-};
-
-// 添加或获取属性
-Class.fn.attr = function (key, value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].getAttribute(key);
-      })()
-    : that.each(function (index, item) {
-        item.setAttribute(key, value);
-      });
-};
-
-// 移除属性
-Class.fn.removeAttr = function (key) {
-  return this.each(function (index, item) {
-    item.removeAttribute(key);
-  });
-};
-
-// 设置或获取 HTML 内容
-Class.fn.html = function (html) {
-  var that = this;
-  return html === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].innerHTML;
-      })()
-    : this.each(function (index, item) {
-        item.innerHTML = html;
-      });
-};
-
-// 设置或获取值
-Class.fn.val = function (value) {
-  var that = this;
-  return value === undefined
-    ? (function () {
-        if (that.length > 0) return that[0].value;
-      })()
-    : this.each(function (index, item) {
-        item.value = value;
-      });
-};
-
-// 追加内容
-Class.fn.append = function (elem) {
-  return this.each(function (index, item) {
-    typeof elem === 'object'
-      ? item.appendChild(elem)
-      : (item.innerHTML = item.innerHTML + elem);
-  });
-};
-
-// 移除内容
-Class.fn.remove = function (elem) {
-  return this.each(function (index, item) {
-    elem ? item.removeChild(elem) : item.parentNode.removeChild(item);
-  });
-};
-
-// 事件绑定
-Class.fn.on = function (eventName, fn, options) {
-  return this.each(function (index, item) {
-    lay.addEvent(item, eventName, fn, options);
-  });
-};
-
-// 解除事件
-Class.fn.off = function (eventName, fn, options) {
-  return this.each(function (index, item) {
-    lay.removeEvent(item, eventName, fn, options);
-  });
-};
-
-export { lay };
+export { lay, use, version };

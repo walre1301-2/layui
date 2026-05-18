@@ -1,0 +1,36 @@
+/** floatbar **/
+.lay-floatbar {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.lay-floatbar-item {
+  width: 48px;
+  height: 48px;
+  line-height: 48px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #9f9f9f;
+  color: #fff;
+  border-radius: var(--lay-border-radius);
+  opacity: 0.95;
+}
+.lay-floatbar-item > .lay-icon {
+  font-size: 24px;
+}
+.lay-floatbar-item:hover {
+  opacity: 0.85;
+}
+.lay-floatbar-item:active {
+  opacity: 1;
+}
+.lay-floatbar-item[data-type='top'] {
+  display: none;
+}
+.lay-floatbar-item[data-type='top'] > .lay-icon {
+  font-size: 32px;
+}

@@ -3,16 +3,15 @@
  * 常用元素操作
  */
 
-import { layui } from '../core/layui.js';
-import $ from 'jquery';
+import { lay } from '../core/lay.js';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
-import { tab } from './tab.js';
 import { nav } from './nav.js';
 import { breadcrumb } from './breadcrumb.js';
 import { progress } from './progress.js';
 import { collapse } from './collapse.js';
 
-const elements = { tab, nav, breadcrumb, progress, collapse };
+const elements = { nav, breadcrumb, progress, collapse };
 
 // 创建组件
 const component = componentBuilder({
@@ -35,11 +34,10 @@ $.extend(component, {
       return '';
     })();
     const components = {
-      tab: '.layui-tab' + elemFilter,
-      nav: '.layui-nav' + elemFilter,
-      breadcrumb: '.layui-breadcrumb' + elemFilter,
-      progress: '.layui-progress' + elemFilter,
-      collapse: '.layui-collapse' + elemFilter,
+      nav: '.lay-nav' + elemFilter,
+      breadcrumb: '.lay-breadcrumb' + elemFilter,
+      progress: '.lay-progress' + elemFilter,
+      collapse: '.lay-collapse' + elemFilter,
     };
 
     // 仅允许渲染指定组件
@@ -52,21 +50,18 @@ $.extend(component, {
       });
     }
 
-    return components[type]
-      ? elements[type].render({
-          elem: components[type],
-        })
-      : layui.each(components, function (componentName) {
-          elements[componentName].render({
-            elem: components[componentName],
-          });
-        });
-  },
+    if (components[type]) {
+      return elements[type].render({
+        elem: components[type],
+      });
+    }
 
-  tabAdd: tab.tabAdd,
-  tabDelete: tab.tabDelete,
-  tabChange: tab.tabChange,
-  tab: tab.tab,
+    Object.keys(components).forEach(function (componentName) {
+      elements[componentName].render({
+        elem: components[componentName],
+      });
+    });
+  },
 
   progress: progress.setValue,
 });
@@ -74,7 +69,7 @@ $.extend(component, {
 component.init = component.render;
 
 // 自动渲染
-$(() => {
+lay.use(() => {
   component.render();
 });
 

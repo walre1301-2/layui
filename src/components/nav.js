@@ -3,11 +3,10 @@
  * 导航菜单组件
  */
 
-import { layui } from '../core/layui.js';
-import $ from 'jquery';
+import { lay } from '../core/lay.js';
+import { $ } from 'jquery';
 import { componentBuilder } from '../core/component.js';
 
-var device = layui.device();
 var SUPER_MOD_NAME = 'element'; // 所属的超级模块名，确保向下兼容
 
 // 创建组件
@@ -16,19 +15,19 @@ var component = componentBuilder({
 
   // 默认配置
   config: {
-    elem: '.layui-nav',
+    elem: '.lay-nav',
   },
 
   CONST: {
-    NAV_ELEM: '.layui-nav',
-    NAV_ITEM: 'layui-nav-item',
-    NAV_BAR: 'layui-nav-bar',
-    NAV_TREE: 'layui-nav-tree',
-    NAV_CHILD: 'layui-nav-child',
-    NAV_CHILD_C: 'layui-nav-child-c',
-    NAV_MORE: 'layui-nav-more',
-    NAV_DOWN: 'layui-icon-down',
-    NAV_ANIM: 'layui-anim layui-anim-upbit',
+    NAV_ELEM: '.lay-nav',
+    NAV_ITEM: 'lay-nav-item',
+    NAV_BAR: 'lay-nav-bar',
+    NAV_TREE: 'lay-nav-tree',
+    NAV_CHILD: 'lay-nav-child',
+    NAV_CHILD_C: 'lay-nav-child-c',
+    NAV_MORE: 'lay-nav-more',
+    NAV_DOWN: 'lay-icon-down',
+    NAV_ANIM: 'lay-anim lay-anim-upbit',
   },
 
   // 渲染
@@ -40,7 +39,7 @@ var component = componentBuilder({
     var timer = {};
     var timerMore = {};
     var timeEnd = {};
-    var NAV_TITLE = 'layui-nav-title';
+    var NAV_TITLE = 'lay-nav-title';
 
     // 滑块跟随
     var follow = function (bar, nav, index) {
@@ -85,15 +84,12 @@ var component = componentBuilder({
         }
 
         // 渐显滑块并适配宽度
-        timer[index] = setTimeout(
-          function () {
-            bar.css({
-              width: child[0] ? 0 : othis.width(),
-              opacity: child[0] ? 0 : 1,
-            });
-          },
-          device.ie && device.ie < 10 ? 0 : TIME,
-        );
+        timer[index] = setTimeout(function () {
+          bar.css({
+            width: child[0] ? 0 : othis.width(),
+            opacity: child[0] ? 0 : 1,
+          });
+        }, TIME);
 
         // 显示子菜单
         clearTimeout(timeEnd[index]);
@@ -169,7 +165,7 @@ var component = componentBuilder({
         // 输出小箭头
         if (child[0] && !thisA.children('.' + CONST.NAV_MORE)[0]) {
           thisA.append(
-            '<i class="layui-icon ' +
+            '<i class="lay-icon ' +
               CONST.NAV_DOWN +
               ' ' +
               CONST.NAV_MORE +
@@ -261,7 +257,7 @@ var events = {
       }
     }
 
-    layui.event.call(this, SUPER_MOD_NAME, 'nav(' + filter + ')', othis);
+    lay.event.call(this, SUPER_MOD_NAME, 'nav(' + filter + ')', othis);
   },
 };
 
